@@ -1,5 +1,7 @@
 # bls for eth with compiled static library
 
+# This is under construction!!!
+
 This repository contains compiled static library of https://github.com/herumi/bls with `BLS_ETH=1`
 
 # How to run sample.go
