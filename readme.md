@@ -16,8 +16,8 @@ The following steps are not necessary if you use compiled binary in this reposit
 * Linux, Mac, Windows(mingw64)
 ```
 mkdir work
-git clone htpps://github.com/herumi/mcl
-git clone htpps://github.com/herumi/bls
+git clone htpps://github.com/herumi/mcl (dev branch)
+git clone htpps://github.com/herumi/bls (dev branch)
 cd mcl
 make src/base64.ll
 make BIT=32 src/base32.ll
