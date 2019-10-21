@@ -13,13 +13,8 @@ func testUncompressed(t *testing.T, gen *G1) {
 	var p1, p2 G1
 	p1.Z.SetString("1", 10) // affine
 	for i := 0; i < 1000; i++ {
-		xBuf := buf[i*96 : i*96+48]
-		yBuf := buf[i*96+48 : i*96+96]
-		if p1.X.Deserialize(xBuf) != nil {
+		if p1.DeserializeUncompressed(buf[i*96 : (i+1)*96]) != nil {
 			t.Fatalf("i=%d X.Deserialize", i)
-		}
-		if p1.Y.Deserialize(yBuf) != nil {
-			t.Fatalf("i=%d Y.Deserialize", i)
 		}
 		if !p1.IsEqual(&p2) {
 			t.Fatalf("p1=%x\np2=%x\n", p1.Serialize(), p2.Serialize())
