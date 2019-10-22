@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@bazel_gazelle//:def.bzl", "gazelle")
+
+prefix = "github.com/herumi/bls-eth-go-binary"
+
+# gazelle:prefix github.com/herumi/bls-eth-go-binary
+gazelle(
+    name = "gazelle",
+    prefix = prefix,
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = ["sample.go"],
+    importpath = "github.com/herumi/bls-eth-go-binary",
+    visibility = ["//visibility:private"],
+    deps = ["//bls:go_default_library"],
+)
+
+go_binary(
+    name = "sample",
+    embed = [":go_default_library"],
+    visibility = ["//visibility:public"],
+)
