@@ -79,16 +79,6 @@ func (id *ID) SetLittleEndian(buf []byte) error {
 	return nil
 }
 
-// SetLittleEndianMod --
-func (id *ID) SetLittleEndianMod(buf []byte) error {
-	// #nosec
-	err := C.blsIdSetLittleEndianMod(&id.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
-	if err != 0 {
-		return fmt.Errorf("err blsIdSetLittleEndianMod %x", err)
-	}
-	return nil
-}
-
 // SerializeToHexStr --
 func (id *ID) SerializeToHexStr() string {
 	return hex.EncodeToString(id.Serialize())
