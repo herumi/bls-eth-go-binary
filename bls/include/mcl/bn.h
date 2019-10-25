@@ -143,6 +143,7 @@ MCLBN_DLL_API int mclBn_getVersion();
 */
 MCLBN_DLL_API int mclBn_init(int curve, int compiledTimeVar);
 
+MCLBN_DLL_API int mclBn_getCurveType(void);
 
 /*
 	pairing : G1 x G2 -> GT
@@ -195,11 +196,27 @@ MCLBN_DLL_API mclSize mclBn_getFieldOrder(char *buf, mclSize maxBufSize);
 	@note ignore the flag if curve is not BLS12-381
 */
 MCLBN_DLL_API void mclBn_setETHserialization(int enable);
+
+// return 1 if ETH serialization mode else 0
+MCLBN_DLL_API int mclBn_getETHserialization(void);
+
 /*
-	use mapToGi according to
-	https://github.com/ethereum/eth2.0-specs/blob/dev/specs/bls_signature.md#modular_squareroot
+	use original g2cofactor
+	@param enable [in] 1:enable,  0:disable(default)
+	use faster algorithm for multiplication of G2 with g2cofactor if enable
+	The constant is 0x204d0ec030004ec0600000002fffffffd times original g2cofacotr
+	@see MapTo::mulByCofactorBLS12
 */
-MCLBN_DLL_API void mclBn_setETHmaptTo(int enable);
+MCLBN_DLL_API void mclBn_setOriginalG2cofactor(int enable);
+
+/*
+	set map-to-function to mode (defalt:MCL_MAP_TO_MODE_ORIGINAL)
+	https://github.com/ethereum/eth2.0-specs/blob/dev/specs/bls_signature.md#modular_squareroot
+	return 0 if success else -1
+	@note call mclBn_setOriginalG2cofactor(true) if MCL_MAP_TO_MODE_ETH2
+*/
+MCLBN_DLL_API int mclBn_setMapToMode(int mode);
+
 
 ////////////////////////////////////////////////
 /*

@@ -12,7 +12,7 @@ func testUncompressedG1(t *testing.T, gen1 *G1) {
 	}
 	var p1, p2 G1
 	for i := 0; i < 1000; i++ {
-		if p1.DeserializeUncompressed(buf[i*96 : (i+1)*96]) != nil {
+		if p1.DeserializeUncompressed(buf[i*96:(i+1)*96]) != nil {
 			t.Fatalf("i=%d X.Deserialize", i)
 		}
 		if !p1.IsEqual(&p2) {
@@ -29,7 +29,7 @@ func testCompressedG1(t *testing.T, gen1 *G1) {
 	}
 	var p1, p2 G1
 	for i := 0; i < 1000; i++ {
-		if p1.Deserialize(buf[i*48 : (i+1)*48]) != nil {
+		if p1.Deserialize(buf[i*48:(i+1)*48]) != nil {
 			t.Fatalf("err i=%d\n", i)
 		}
 		if !p1.IsEqual(&p2) {
@@ -46,7 +46,7 @@ func testUncompressedG2(t *testing.T, gen2 *G2) {
 	}
 	var p1, p2 G2
 	for i := 0; i < 1000; i++ {
-		if p1.DeserializeUncompressed(buf[i*192 : (i+1)*192]) != nil {
+		if p1.DeserializeUncompressed(buf[i*192:(i+1)*192]) != nil {
 			t.Fatalf("i=%d X.Deserialize", i)
 		}
 		if !p1.IsEqual(&p2) {
@@ -63,7 +63,7 @@ func testCompressedG2(t *testing.T, gen2 *G2) {
 	}
 	var p1, p2 G2
 	for i := 0; i < 1000; i++ {
-		if p1.Deserialize(buf[i*96 : (i+1)*96]) != nil {
+		if p1.Deserialize(buf[i*96:(i+1)*96]) != nil {
 			t.Fatalf("err i=%d\n", i)
 		}
 		if !p1.IsEqual(&p2) {

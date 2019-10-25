@@ -121,6 +121,22 @@ func SetETHserialization(enable bool) {
 	C.mclBn_setETHserialization(bool2Cint(enable))
 }
 
+// SetOriginalG2cofactor -- true if BLS_ETH is defined
+func SetOriginalG2cofactor(enable bool) {
+	// #nosec
+	C.mclBn_setOriginalG2cofactor(bool2Cint(enable))
+}
+
+// SetMapToMode --
+func SetMapToMode(mode int) error {
+	// #nosec
+	err := C.mclBn_setMapToMode((C.int)(mode))
+	if err != 0 {
+		return fmt.Errorf("SetMapToMode mode=%d\n", mode)
+	}
+	return nil
+}
+
 // Fr --
 type Fr struct {
 	v C.mclBnFr
@@ -595,6 +611,7 @@ func (x *G1) Deserialize(buf []byte) error {
 }
 
 const ZERO_HEADER = 1 << 6
+
 func isZeroFormat(buf []byte, n int) bool {
 	if len(buf) < n {
 		return false
@@ -1040,6 +1057,22 @@ func GTDiv(out *GT, x *GT, y *GT) {
 // GTPow --
 func GTPow(out *GT, x *GT, y *Fr) {
 	C.mclBnGT_pow(out.getPointer(), x.getPointer(), y.getPointer())
+}
+
+// MapToG1 --
+func MapToG1(out *G1, x *Fp) error {
+	if C.mclBnFp_mapToG1(out.getPointer(), x.getPointer()) != 0 {
+		return fmt.Errorf("err mclBnFp_mapToG1")
+	}
+	return nil
+}
+
+// MapToG2 --
+func MapToG2(out *G2, x *Fp2) error {
+	if C.mclBnFp2_mapToG2(out.getPointer(), x.getPointer()) != 0 {
+		return fmt.Errorf("err mclBnFp2_mapToG2")
+	}
+	return nil
 }
 
 // Pairing --
