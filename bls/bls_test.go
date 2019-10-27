@@ -153,6 +153,24 @@ func Test(t *testing.T) {
 	testVerifyAggreageteHash(t)
 }
 
+func BenchmarkPairing(b *testing.B) {
+	b.StopTimer()
+	err := Init(BLS12_381)
+	if err != nil {
+		b.Fatal(err)
+	}
+	var P G1
+	var Q G2
+	var e GT
+	P.HashAndMapTo([]byte("abc"))
+	Q.HashAndMapTo([]byte("abc"))
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		Pairing(&e, &P, &Q)
+	}
+	b.StopTimer()
+}
+
 func BenchmarkSignHash(b *testing.B) {
 	b.StopTimer()
 	err := Init(BLS12_381)
