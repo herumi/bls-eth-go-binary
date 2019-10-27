@@ -73,6 +73,65 @@ func testCompressedG2(t *testing.T, gen2 *G2) {
 	}
 }
 
+func getSecPubHash() (*SecretKey, *PublicKey, []byte) {
+	var sec SecretKey
+	sec.SetByCSPRNG()
+	pub := sec.GetPublicKey()
+	var x Fp2
+	x.D[0].SetByCSPRNG()
+	x.D[1].SetByCSPRNG()
+	hash := x.Serialize()
+	return &sec, pub, hash
+}
+
+func testSignAndVerifyHash(t *testing.T) {
+	sec, pub, hash := getSecPubHash()
+	sig := sec.SignHash(hash)
+	if sig == nil {
+		t.Fatal("SignHash")
+	}
+	if !sig.VerifyHash(pub, hash) {
+		t.Fatal("VerifyHash 1")
+	}
+	hash[0] = hash[0] + 1
+	if sig.VerifyHash(pub, hash) {
+		t.Fatal("VerifyHash 2")
+	}
+}
+
+func getSecPubHashVec(n int) ([]PublicKey, [][]byte, []Sign) {
+	pubVec := make([]PublicKey, n)
+	hashVec := make([][]byte, n)
+	sigVec := make([]Sign, n)
+	var x Fp2
+	var sec SecretKey
+	for i := 0; i < n; i++ {
+		sec.SetByCSPRNG()
+		pubVec[i] = *sec.GetPublicKey()
+		x.D[0].SetByCSPRNG()
+		x.D[1].SetByCSPRNG()
+		hashVec[i] = x.Serialize()
+		sigVec[i] = *sec.SignHash(hashVec[i])
+	}
+	return pubVec, hashVec, sigVec
+}
+
+func testVerifyAggreageteHash(t *testing.T) {
+	const N = 100
+	pubVec, hashVec, sigVec := getSecPubHashVec(N)
+	agg := sigVec[0]
+	for i := 1; i < N; i++ {
+		agg.Add(&sigVec[i])
+	}
+	if !agg.VerifyAggregateHashes(pubVec, hashVec) {
+		t.Fatal("VerifyAggregateHashes 1")
+	}
+	hashVec[0][0] = hashVec[0][0] + 1
+	if agg.VerifyAggregateHashes(pubVec, hashVec) {
+		t.Fatal("VerifyAggregateHashes 2")
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -90,4 +149,53 @@ func Test(t *testing.T) {
 	testCompressedG1(t, &gen1)
 	testUncompressedG2(t, &gen2)
 	testCompressedG2(t, &gen2)
+	testSignAndVerifyHash(t)
+	testVerifyAggreageteHash(t)
+}
+
+func BenchmarkSignHash(b *testing.B) {
+	b.StopTimer()
+	err := Init(BLS12_381)
+	if err != nil {
+		b.Fatal(err)
+	}
+	sec, _, hash := getSecPubHash()
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		sec.SignHash(hash)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkVerifyHash(b *testing.B) {
+	b.StopTimer()
+	err := Init(BLS12_381)
+	if err != nil {
+		b.Fatal(err)
+	}
+	sec, pub, hash := getSecPubHash()
+	sig := sec.SignHash(hash)
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		sig.VerifyHash(pub, hash)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkVerifyAggreageteHash(b *testing.B) {
+	b.StopTimer()
+	err := Init(BLS12_381)
+	if err != nil {
+		b.Fatal(err)
+	}
+	const N = 50
+	pubVec, hashVec, sigVec := getSecPubHashVec(N)
+	agg := sigVec[0]
+	for i := 1; i < N; i++ {
+		agg.Add(&sigVec[i])
+	}
+	b.StartTimer()
+	for n := 0; n < b.N; n++ {
+		agg.VerifyAggregateHashes(pubVec, hashVec)
+	}
 }
