@@ -1,3 +1,4 @@
+include ../mcl/common.mk
 # ios
 XCODEPATH=$(shell xcode-select -p)
 IOS_CLANG=$(XCODEPATH)/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang
@@ -15,15 +16,42 @@ IOS_LIB=libbls$(CURVE_BIT)
 
 GOMOBILE_ARCHS=armv7 arm64
 
+MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=8 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -I../bls/include -I../mcl/include
+MIN_CFLAGS+=-DBLS_ETH -DBLS_SWAP_G
+OBJ_DIR=obj
 all:
+ifeq ($(CPU),x86-64)
+	$(eval _ARCH=amd64)
+ifeq ($(OS),mingw64)
+	$(eval _OS=windows)
+endif
+ifeq ($(OS),Linux)
+	$(eval _OS=linux)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+endif
+ifeq ($(OS),mac)
+	$(eval _OS=darwin)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+endif
+endif
+	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
+	-mkdir -p $(LIB_DIR)
+	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
+	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
+	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o
+
+android:
+	$(MAKE) -C android
+
+ios:
 	@for target in $(GOMOBILE_ARCHS); do \
-		$(MAKE) ios ARCH=$$target PLATFORM="iPhoneOS"; \
+		$(MAKE) each_ios ARCH=$$target PLATFORM="iPhoneOS"; \
 	done
 
 ../mcl/src/base64.ll:
 	$(MAKE) -C ../mcl src/base64.ll
 
-ios: ../mcl/src/base64.ll
+each_ios: ../mcl/src/base64.ll
 	@echo "Building iOS $(ARCH)..."
 	$(eval IOS_OUTDIR=ios/$(ARCH))
 	$(eval IOS_SDK_PATH=$(XCODEPATH)/Platforms/$(PLATFORM).platform/Developer/SDKs/$(PLATFORM).sdk)
@@ -44,4 +72,4 @@ update:
 	patch -o - -p0 ../bls/ffi/go/bls/mcl.go <patch/mcl.patch > bls/mcl.go
 	patch -o - -p0 ../bls/ffi/go/bls/bls.go <patch/bls.patch > bls/bls.go
 
-.PHONY: ios
+.PHONY: android ios each_ios
