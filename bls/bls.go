@@ -19,6 +19,7 @@ int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 import "C"
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"unsafe"
@@ -334,6 +335,23 @@ type PublicKey struct {
 	v C.blsPublicKey
 }
 
+// PublicKeys ..
+type PublicKeys []PublicKey
+
+// JSON provides a JSON string dump of slice of PublicKeys in Hexformat
+func (keys PublicKeys) JSON() string {
+	type T struct {
+		Count      int      `json:"count"`
+		PublicKeys []string `json:"public-keys"`
+	}
+	t := T{len(keys), make([]string, len(keys))}
+	for i := range keys {
+		t.PublicKeys[i] = keys[i].SerializeToHexStr()
+	}
+	b, _ := json.Marshal(t)
+	return string(b)
+}
+
 // Serialize --
 func (pub *PublicKey) Serialize() []byte {
 	buf := make([]byte, 2048)
@@ -617,6 +635,45 @@ func (sig *Sign) VerifyAggregateHashes(pubVec []PublicKey, hash [][]byte) bool {
 		copy(h[i*hashByte:(i+1)*hashByte], hash[i][0:min(hn, hashByte)])
 	}
 	return C.blsVerifyAggregatedHashes(&sig.v, &pubVec[0].v, unsafe.Pointer(&h[0]), C.mclSize(hashByte), C.mclSize(n)) == 1
+}
+
+// SignHashWithDomain --
+func (sec *SecretKey) SignHashWithDomain(hashWithDomain []byte) (sig *Sign) {
+	if len(hashWithDomain) != 40 {
+		return nil
+	}
+	sig = new(Sign)
+	// #nosec
+	err := C.blsSignHashWithDomain(&sig.v, &sec.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0])))
+	if err == 0 {
+		return sig
+	}
+	return nil
+}
+
+// VerifyHashWithDomain --
+func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) bool {
+	if len(hashWithDomain) != 40 {
+		return false
+	}
+	if pub == nil {
+		return false
+	}
+	// #nosec
+	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
+}
+
+// VerifyAggregateHashWithDomain --
+// hashWithDomains is array of 40 * len(pubVec)
+func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
+	if pubVec == nil {
+		return false
+	}
+	n := len(pubVec)
+	if n == 0 || len(hashWithDomains) != n * 40 {
+		return false
+	}
+	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
 }
 
 ///
