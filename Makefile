@@ -88,4 +88,8 @@ update:
 	patch -o - -p0 ../bls/ffi/go/bls/mcl.go <patch/mcl.patch > bls/mcl.go
 	patch -o - -p0 ../bls/ffi/go/bls/bls.go <patch/bls.patch > bls/bls.go
 
+update_patch:
+	-diff -up ../bls/ffi/go/bls/mcl.go bls/mcl.go > patch/mcl.patch
+	-diff -up ../bls/ffi/go/bls/bls.go bls/bls.go > patch/bls.patch
+
 .PHONY: android ios each_ios
