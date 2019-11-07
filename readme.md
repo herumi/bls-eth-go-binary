@@ -1,7 +1,10 @@
 # bls for eth with compiled static library
 
+This repository contains compiled static library of https://github.com/herumi/bls with `BLS_ETH=1`.
 
-This repository contains compiled static library of https://github.com/herumi/bls with `BLS_ETH=1`
+* SecretKey; Fr
+* PublicKey; G1
+* Signature; G2
 
 # How to run sample.go
 ```
@@ -12,19 +15,19 @@ go run sample.go
 # How to build the static binary
 The following steps are not necessary if you use compiled binary in this repository.
 
-* Linux, Mac, Windows(mingw64)
-clang++ is necessary
 ```
 mkdir work
 git clone https://github.com/herumi/mcl
 git clone https://github.com/herumi/bls
-git clone https://github.com/herumi/bls-eth-go-binary
-cd bls-eth-go-binary
-make CXX=clang++ # better performance than gcc
+```
+
+* Linux, Mac, Windows(mingw64)
+clang generates better binary than gcc.
+```
+make CXX=clang++
 ```
 
 * Android
-At first, setup Android SDK
 ```
 make android
 ```
@@ -33,4 +36,3 @@ make android
 ```
 make ios
 ```
-
