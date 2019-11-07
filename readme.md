@@ -13,13 +13,14 @@ go run sample.go
 The following steps are not necessary if you use compiled binary in this repository.
 
 * Linux, Mac, Windows(mingw64)
+clang++ is necessary
 ```
 mkdir work
 git clone https://github.com/herumi/mcl
 git clone https://github.com/herumi/bls
 git clone https://github.com/herumi/bls-eth-go-binary
 cd bls-eth-go-binary
-make
+make CXX=clang++ # better performance than gcc
 ```
 
 * Android

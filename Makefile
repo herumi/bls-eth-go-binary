@@ -16,10 +16,10 @@ IOS_LIB=libbls$(CURVE_BIT)
 
 GOMOBILE_ARCHS=armv7 arm64
 
-MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=8 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -I../bls/include -I../mcl/include
+MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=8 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -I../bls/include -I../mcl/include
 MIN_CFLAGS+=-DBLS_ETH -DBLS_SWAP_G
 OBJ_DIR=obj
-all:
+all: ../mcl/src/base64.ll
 ifeq ($(CPU),x86-64)
 	$(eval _ARCH=amd64)
 ifeq ($(OS),mingw64)
@@ -37,8 +37,9 @@ endif
 	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
 	-mkdir -p $(LIB_DIR)
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
+	$(CXX) -c -o $(OBJ_DIR)/base64.o ../mcl/src/base64.ll $(MIN_CFLAGS)
 	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
-	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o
+	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base64.o
 
 android:
 	$(MAKE) -C android
