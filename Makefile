@@ -41,8 +41,15 @@ endif
 	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
 	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base64.o
 
-android:
-	$(MAKE) -C android
+BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
+
+ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
+android: $(BASE_LL)
+	@ndk-build -C android/jni
+	@for target in $(ANDROID_TARGET); do \
+		mkdir -p bls/lib/android/$$target; \
+		cp android/obj/local/$$target/libbls384_256.a bls/lib/android/$$target/; \
+	done
 
 ios:
 	@for target in $(GOMOBILE_ARCHS); do \
@@ -51,6 +58,9 @@ ios:
 
 ../mcl/src/base64.ll:
 	$(MAKE) -C ../mcl src/base64.ll
+
+../mcl/src/base32.ll:
+	$(MAKE) -C ../mcl src/base32.ll BIT=32
 
 each_ios: ../mcl/src/base64.ll
 	@echo "Building iOS $(ARCH)..."
