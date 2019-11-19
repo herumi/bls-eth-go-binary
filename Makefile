@@ -36,7 +36,7 @@ BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
 ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
 android: $(BASE_LL)
-	@ndk-build -C android/jni
+	@ndk-build -C android/jni NDK_DEBUG=0
 	@for target in $(ANDROID_TARGET); do \
 		mkdir -p bls/lib/android/$$target; \
 		cp android/obj/local/$$target/libbls384_256.a bls/lib/android/$$target/; \
