@@ -12,7 +12,7 @@ go get github.com/herumi/bls-eth-go-binary/
 go run sample.go
 ```
 
-# How to build the static binary
+# How to build the static library
 The following steps are not necessary if you use compiled binary in this repository.
 
 ```
@@ -35,4 +35,11 @@ make android
 * iOS
 ```
 make ios
+```
+
+# How to use the static library from C
+```
+#define BLS_ETH
+#include <mcl/bn_c384_256.h>
+#include <bls/bls.h>
 ```
