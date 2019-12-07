@@ -663,6 +663,48 @@ func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) boo
 	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
 }
 
+// SerializeUncompressed --
+func (pub *PublicKey) SerializeUncompressed() []byte {
+	buf := make([]byte, 2048)
+	// #nosec
+	n := C.blsPublicKeySerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
+	if n == 0 {
+		panic("err blsPublicKeySerializeUncompressed")
+	}
+	return buf[:n]
+}
+
+// SerializeUncompressed --
+func (sig *Sign) SerializeUncompressed() []byte {
+	buf := make([]byte, 2048)
+	// #nosec
+	n := C.blsSignatureSerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
+	if n == 0 {
+		panic("err blsSignatureSerializeUncompressed")
+	}
+	return buf[:n]
+}
+
+// DeserializeUncompressed --
+func (pub *PublicKey) DeserializeUncompressed(buf []byte) error {
+	// #nosec
+	err := C.blsPublicKeyDeserializeUncompressed(&pub.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
+	if err == 0 {
+		return fmt.Errorf("err blsPublicKeyDeserializeUncompressed %x", buf)
+	}
+	return nil
+}
+
+// DeserializeUncompressed --
+func (sig *Sign) DeserializeUncompressed(buf []byte) error {
+	// #nosec
+	err := C.blsSignatureDeserializeUncompressed(&sig.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
+	if err == 0 {
+		return fmt.Errorf("err blsSignatureDeserializeUncompressed %x", buf)
+	}
+	return nil
+}
+
 // VerifyAggregateHashWithDomain --
 // hashWithDomains is array of 40 * len(pubVec)
 func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
@@ -670,7 +712,7 @@ func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomai
 		return false
 	}
 	n := len(pubVec)
-	if n == 0 || len(hashWithDomains) != n * 40 {
+	if n == 0 || len(hashWithDomains) != n*40 {
 		return false
 	}
 	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1

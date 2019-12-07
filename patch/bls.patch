@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2019-11-14 12:47:28.315720768 +0900
-+++ bls/bls.go	2019-11-14 12:48:33.130326646 +0900
+--- ../bls/ffi/go/bls/bls.go	2019-11-15 11:37:36.191800373 +0900
++++ bls/bls.go	2019-12-07 20:36:59.331495858 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -35,7 +35,63 @@
  #include <bls/bls.h>
  */
  import "C"
-@@ -680,7 +676,6 @@ func (sig *Sign) VerifyAggregateHashWith
+@@ -667,6 +663,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
+ 	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
+ }
+ 
++// SerializeUncompressed --
++func (pub *PublicKey) SerializeUncompressed() []byte {
++	buf := make([]byte, 2048)
++	// #nosec
++	n := C.blsPublicKeySerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
++	if n == 0 {
++		panic("err blsPublicKeySerializeUncompressed")
++	}
++	return buf[:n]
++}
++
++// SerializeUncompressed --
++func (sig *Sign) SerializeUncompressed() []byte {
++	buf := make([]byte, 2048)
++	// #nosec
++	n := C.blsSignatureSerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
++	if n == 0 {
++		panic("err blsSignatureSerializeUncompressed")
++	}
++	return buf[:n]
++}
++
++// DeserializeUncompressed --
++func (pub *PublicKey) DeserializeUncompressed(buf []byte) error {
++	// #nosec
++	err := C.blsPublicKeyDeserializeUncompressed(&pub.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
++	if err == 0 {
++		return fmt.Errorf("err blsPublicKeyDeserializeUncompressed %x", buf)
++	}
++	return nil
++}
++
++// DeserializeUncompressed --
++func (sig *Sign) DeserializeUncompressed(buf []byte) error {
++	// #nosec
++	err := C.blsSignatureDeserializeUncompressed(&sig.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
++	if err == 0 {
++		return fmt.Errorf("err blsSignatureDeserializeUncompressed %x", buf)
++	}
++	return nil
++}
++
+ // VerifyAggregateHashWithDomain --
+ // hashWithDomains is array of 40 * len(pubVec)
+ func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
+@@ -674,13 +712,12 @@ func (sig *Sign) VerifyAggregateHashWith
+ 		return false
+ 	}
+ 	n := len(pubVec)
+-	if n == 0 || len(hashWithDomains) != n * 40 {
++	if n == 0 || len(hashWithDomains) != n*40 {
+ 		return false
+ 	}
  	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
  }
  
