@@ -1,8 +1,11 @@
 package bls
 
 import (
+	"encoding/csv"
 	"encoding/hex"
+	"io"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -172,6 +175,23 @@ func ethSignTest(t *testing.T) {
 	sigHex := "b2deb7c656c86cb18c43dae94b21b107595486438e0b906f3bdb29fa316d0fc3cab1fc04c6ec9879c773849f2564d39317bfa948b4a35fc8509beafd3a2575c25c077ba8bca4df06cb547fe7ca3b107d49794b7132ef3b5493a6ffb2aad2a441"
 
 	ethSignOneTest(t, secHex, msgHex, sigHex)
+	fileName := "tests/sign.txt"
+	fp, err := os.Open(fileName)
+	if err != nil {
+		t.Fatalf("can't open %v %v", fileName, err)
+	}
+	defer fp.Close()
+	reader := csv.NewReader(fp)
+	reader.Comma = ' '
+	for {
+		secHex, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		msgHex, _ := reader.Read()
+		sigHex, _ := reader.Read()
+		ethSignOneTest(t, secHex[1], msgHex[1], sigHex[1])
+	}
 }
 
 func testEth(t *testing.T) {
