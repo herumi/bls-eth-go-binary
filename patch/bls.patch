@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2019-11-15 11:37:36.191800373 +0900
-+++ bls/bls.go	2019-12-07 20:36:59.331495858 +0900
+--- ../bls/ffi/go/bls/bls.go	2020-02-04 12:49:07.040526003 +0900
++++ bls/bls.go	2020-02-04 14:10:30.874205387 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -84,18 +84,97 @@
  // VerifyAggregateHashWithDomain --
  // hashWithDomains is array of 40 * len(pubVec)
  func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-@@ -674,13 +712,12 @@ func (sig *Sign) VerifyAggregateHashWith
- 		return false
- 	}
- 	n := len(pubVec)
--	if n == 0 || len(hashWithDomains) != n * 40 {
-+	if n == 0 || len(hashWithDomains) != n*40 {
- 		return false
- 	}
+@@ -680,6 +718,93 @@ func (sig *Sign) VerifyAggregateHashWith
  	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
  }
  
--
++// SetETHmode --
++// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
++func SetETHmode(mode int) {
++	C.blsSetETHmode(C.int(mode))
++}
++
++// SignatureVerifyOrder --
++// check the correctness of the order of signature in deserialize if true
++func SignatureVerifyOrder(doVerify bool) {
++	var b = 0
++	if doVerify {
++		b = 1
++	}
++	C.blsSignatureVerifyOrder(C.int(b))
++}
++
++// SignByte --
++func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
++	sig = new(Sign)
++	// #nosec
++	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
++	return sig
++}
++
++// VerifyByte --
++func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
++	if sig == nil || pub == nil {
++		return false
++	}
++	// #nosec
++	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
++}
++
++// Aggregate --
++func (sig *Sign) Aggregate(sigVec []Sign) {
++	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
++}
++
++// FastAggregateVerify --
++func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
++	if pubVec == nil {
++		return false
++	}
++	n := len(pubVec)
++	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
++}
++
++func AreAllMsgDifferent(msgVec []byte, msgSize int) bool {
++	n := len(msgVec) / msgSize
++	// How can I use []byte instead of string?
++	set := map[string]struct{}{}
++	for i := 0; i < n; i++ {
++		msg := string(msgVec[i*msgSize : (i+1)*msgSize])
++		_, ok := set[msg]
++		if ok {
++			return false
++		}
++		set[msg] = struct{}{}
++	}
++	return true
++}
++
++func (sig *Sign) innerAggregateVerify(pubVec []PublicKey, msgVec []byte, checkMessage bool) bool {
++	const MSG_SIZE = 32
++	n := len(pubVec)
++	if n == 0 || len(msgVec) != MSG_SIZE*n {
++		return false
++	}
++	if checkMessage && !AreAllMsgDifferent(msgVec, MSG_SIZE) {
++		return false
++	}
++	return C.blsAggregateVerifyNoCheck(&sig.v, &pubVec[0].v, unsafe.Pointer(&msgVec[0]), MSG_SIZE, C.mclSize(n)) == 1
++}
++
++// AggregateVerify --
++// len(msgVec) == 32 * len(pubVec)
++func (sig *Sign) AggregateVerifyNoCheck(pubVec []PublicKey, msgVec []byte) bool {
++	return sig.innerAggregateVerify(pubVec, msgVec, false)
++}
++
++// AggregateVerify --
++// len(msgVec) == 32 * len(pubVec)
++// check all msgs are different each other
++func (sig *Sign) AggregateVerify(pubVec []PublicKey, msgVec []byte) bool {
++	return sig.innerAggregateVerify(pubVec, msgVec, true)
++}
++
  ///
  
  var sRandReader io.Reader

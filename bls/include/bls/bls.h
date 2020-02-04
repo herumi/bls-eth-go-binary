@@ -92,10 +92,23 @@ typedef struct {
 	@note blsInit() is not thread safe
 */
 BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
+
+/*
+	use new eth 2.0 spec
+	@return 0 if success
+	@remark
+	this functions and the spec may change until it is fixed
+	the size of message <= 32
+*/
+#define BLS_ETH_MODE_OLD 0
+#define BLS_ETH_MODE_LATEST 1
+BLS_DLL_API int blsSetETHmode(int mode);
+
 /*
 	set ETH serialization mode for BLS12-381
 	@param ETHserialization [in] 1:enable,  0:disable
 	@note ignore the flag if curve is not BLS12-381
+	@note set in blsInit if BLS_ETH is defined
 */
 BLS_DLL_API void blsSetETHserialization(int ETHserialization);
 
@@ -116,6 +129,19 @@ BLS_DLL_API void blsSign(blsSignature *sig, const blsSecretKey *sec, const void 
 
 // return 1 if valid
 BLS_DLL_API int blsVerify(const blsSignature *sig, const blsPublicKey *pub, const void *m, mclSize size);
+
+// aggSig = sum of sigVec[0..n]
+BLS_DLL_API void blsAggregateSignature(blsSignature *aggSig, const blsSignature *sigVec, mclSize n);
+
+// verify(sig, sum of pubVec[0..n], msg)
+BLS_DLL_API int blsFastAggregateVerify(const blsSignature *sig, const blsPublicKey *pubVec, mclSize n, const void *msg, mclSize msgSize);
+
+/*
+	all msg[i] has the same msgSize byte, so msgVec must have (msgSize * n) byte area
+	verify prod e(H(pubVec[i], msgToG2[i]) == e(P, sig)
+	@note CHECK that sig has the valid order, all msg are different each other before calling this
+*/
+BLS_DLL_API int blsAggregateVerifyNoCheck(const blsSignature *sig, const blsPublicKey *pubVec, const void *msgVec, mclSize msgSize, mclSize n);
 
 // return written byte size if success else 0
 BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);

@@ -718,6 +718,93 @@ func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomai
 	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
 }
 
+// SetETHmode --
+// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
+func SetETHmode(mode int) {
+	C.blsSetETHmode(C.int(mode))
+}
+
+// SignatureVerifyOrder --
+// check the correctness of the order of signature in deserialize if true
+func SignatureVerifyOrder(doVerify bool) {
+	var b = 0
+	if doVerify {
+		b = 1
+	}
+	C.blsSignatureVerifyOrder(C.int(b))
+}
+
+// SignByte --
+func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
+	sig = new(Sign)
+	// #nosec
+	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
+	return sig
+}
+
+// VerifyByte --
+func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
+	if sig == nil || pub == nil {
+		return false
+	}
+	// #nosec
+	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+}
+
+// Aggregate --
+func (sig *Sign) Aggregate(sigVec []Sign) {
+	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
+}
+
+// FastAggregateVerify --
+func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
+	if pubVec == nil {
+		return false
+	}
+	n := len(pubVec)
+	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+}
+
+func AreAllMsgDifferent(msgVec []byte, msgSize int) bool {
+	n := len(msgVec) / msgSize
+	// How can I use []byte instead of string?
+	set := map[string]struct{}{}
+	for i := 0; i < n; i++ {
+		msg := string(msgVec[i*msgSize : (i+1)*msgSize])
+		_, ok := set[msg]
+		if ok {
+			return false
+		}
+		set[msg] = struct{}{}
+	}
+	return true
+}
+
+func (sig *Sign) innerAggregateVerify(pubVec []PublicKey, msgVec []byte, checkMessage bool) bool {
+	const MSG_SIZE = 32
+	n := len(pubVec)
+	if n == 0 || len(msgVec) != MSG_SIZE*n {
+		return false
+	}
+	if checkMessage && !AreAllMsgDifferent(msgVec, MSG_SIZE) {
+		return false
+	}
+	return C.blsAggregateVerifyNoCheck(&sig.v, &pubVec[0].v, unsafe.Pointer(&msgVec[0]), MSG_SIZE, C.mclSize(n)) == 1
+}
+
+// AggregateVerify --
+// len(msgVec) == 32 * len(pubVec)
+func (sig *Sign) AggregateVerifyNoCheck(pubVec []PublicKey, msgVec []byte) bool {
+	return sig.innerAggregateVerify(pubVec, msgVec, false)
+}
+
+// AggregateVerify --
+// len(msgVec) == 32 * len(pubVec)
+// check all msgs are different each other
+func (sig *Sign) AggregateVerify(pubVec []PublicKey, msgVec []byte) bool {
+	return sig.innerAggregateVerify(pubVec, msgVec, true)
+}
+
 ///
 
 var sRandReader io.Reader

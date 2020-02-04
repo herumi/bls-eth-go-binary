@@ -136,6 +136,21 @@ func testVerifyAggreageteHash(t *testing.T) {
 	}
 }
 
+func TestAreAllMsgDifferent(t *testing.T) {
+	type V struct {
+		s       string
+		msgSize int
+		result  bool
+	}
+	m := []V{V{"abcdabce", 4, true},
+		V{"abcdabce", 2, false}, V{"abcdefgh", 2, true}, V{"xyzxyz", 2, true}, V{"xyzxyz", 3, false}}
+	for _, v := range m {
+		if AreAllMsgDifferent([]byte(v.s), v.msgSize) != v.result {
+			t.Fatalf("err %v %v\n", v.s, v.msgSize)
+		}
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
