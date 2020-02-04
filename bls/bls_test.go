@@ -1,6 +1,7 @@
 package bls
 
 import (
+	"encoding/hex"
 	"io/ioutil"
 	"testing"
 )
@@ -151,6 +152,33 @@ func TestAreAllMsgDifferent(t *testing.T) {
 	}
 }
 
+func ethSignOneTest(t *testing.T, secHex string, msgHex string, sigHex string) {
+	var sec SecretKey
+	sec.DeserializeHexStr(secHex)
+	pub := sec.GetPublicKey()
+	msg, _ := hex.DecodeString(msgHex)
+	sig := sec.SignByte(msg)
+	if !sig.VerifyByte(pub, msg) {
+		t.Fatalf("bad verify %v %v", secHex, msgHex)
+	}
+	if sig.SerializeToHexStr() != sigHex {
+		t.Fatalf("bad sign %v %v", secHex, msgHex)
+	}
+}
+
+func ethSignTest(t *testing.T) {
+	secHex := "47b8192d77bf871b62e87859d653922725724a5c031afeabc60bcef5ff665138"
+	msgHex := "0000000000000000000000000000000000000000000000000000000000000000"
+	sigHex := "b2deb7c656c86cb18c43dae94b21b107595486438e0b906f3bdb29fa316d0fc3cab1fc04c6ec9879c773849f2564d39317bfa948b4a35fc8509beafd3a2575c25c077ba8bca4df06cb547fe7ca3b107d49794b7132ef3b5493a6ffb2aad2a441"
+
+	ethSignOneTest(t, secHex, msgHex, sigHex)
+}
+
+func testEth(t *testing.T) {
+	SetETHmode(1)
+	ethSignTest(t)
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -170,6 +198,7 @@ func Test(t *testing.T) {
 	testCompressedG2(t, &gen2)
 	testSignAndVerifyHash(t)
 	testVerifyAggreageteHash(t)
+	testEth(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
