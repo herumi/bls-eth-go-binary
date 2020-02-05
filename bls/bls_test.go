@@ -245,6 +245,9 @@ func ethAggregateVerifyNoCheckTest(t *testing.T) {
 		b, _ := hex.DecodeString(msgHexTbl[i])
 		msgVec = append(msgVec, b...)
 	}
+	if !AreAllMsgDifferent(msgVec, 32) {
+		t.Fatalf("bad msgVec")
+	}
 	if !sig.AggregateVerifyNoCheck(pubVec, msgVec) {
 		t.Fatalf("bad sig")
 	}
@@ -313,6 +316,9 @@ func blsAggregateVerifyNoCheckTestOne(t *testing.T, n int) {
 
 		msgs[msgSize*i] = byte(i)
 		sigs[i] = *sec.SignByte(msgs[msgSize*i : msgSize*(i+1)])
+	}
+	if !AreAllMsgDifferent(msgs, msgSize) {
+		t.Fatalf("bad msgs")
 	}
 	var aggSig Sign
 	aggSig.Aggregate(sigs)
