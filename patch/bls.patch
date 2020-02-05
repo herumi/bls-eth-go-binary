@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2020-02-04 12:49:07.040526003 +0900
-+++ bls/bls.go	2020-02-04 14:10:30.874205387 +0900
+--- ../bls/ffi/go/bls/bls.go	2020-02-05 16:13:11.094627174 +0900
++++ bls/bls.go	2020-02-05 16:18:03.303513015 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -35,7 +35,7 @@
  #include <bls/bls.h>
  */
  import "C"
-@@ -667,6 +663,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
+@@ -694,6 +690,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
  	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
  }
  
@@ -84,7 +84,7 @@
  // VerifyAggregateHashWithDomain --
  // hashWithDomains is array of 40 * len(pubVec)
  func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-@@ -680,6 +718,93 @@ func (sig *Sign) VerifyAggregateHashWith
+@@ -707,6 +745,93 @@ func (sig *Sign) VerifyAggregateHashWith
  	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
  }
  
