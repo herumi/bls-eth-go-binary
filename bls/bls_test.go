@@ -194,8 +194,27 @@ func ethSignTest(t *testing.T) {
 	}
 }
 
+func ethAggregateTest(t *testing.T) {
+	msgHexTbl := []string{ "b2a0bd8e837fc2a1b28ee5bcf2cddea05f0f341b375e51de9d9ee6d977c2813a5c5583c19d4e7db8d245eebd4e502163076330c988c91493a61b97504d1af85fdc167277a1664d2a43af239f76f176b215e0ee81dc42f1c011dc02d8b0a31e32", "b2deb7c656c86cb18c43dae94b21b107595486438e0b906f3bdb29fa316d0fc3cab1fc04c6ec9879c773849f2564d39317bfa948b4a35fc8509beafd3a2575c25c077ba8bca4df06cb547fe7ca3b107d49794b7132ef3b5493a6ffb2aad2a441", "a1db7274d8981999fee975159998ad1cc6d92cd8f4b559a8d29190dad41dc6c7d17f3be2056046a8bcbf4ff6f66f2a360860fdfaefa91b8eca875d54aca2b74ed7148f9e89e2913210a0d4107f68dbc9e034acfc386039ff99524faf2782de0e", }
+	sigHex := "973ab0d765b734b1cbb2557bcf52392c9c7be3cd21d5bd28572d99f618c65e921f0dd82560cc103feb9f000c23c00e660e1364ed094f137e1045e73116cd75903af446df3c357540a4970ec367a7f7fa7493a5db27ca322c48d57740908585e8"
+	n := len(msgHexTbl)
+	sigVec := make([]Sign, n)
+	for i, sigHex := range msgHexTbl {
+		var t Sign
+		t.DeserializeHexStr(sigHex)
+		sigVec[i] = t
+	}
+	var aggSig Sign
+	aggSig.Aggregate(sigVec)
+	s := aggSig.SerializeToHexStr()
+	if s != sigHex {
+		t.Fatalf("bad aggregate %v %v\n", s, sigHex)
+	}
+}
+
 func testEth(t *testing.T) {
 	SetETHmode(1)
+	ethAggregateTest(t)
 	ethSignTest(t)
 }
 
