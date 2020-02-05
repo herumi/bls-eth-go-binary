@@ -300,12 +300,45 @@ func ethFastAggregateVerifyTest(t *testing.T) {
 	}
 }
 
+func blsAggregateVerifyNoCheckTestOne(t *testing.T, n int) {
+	t.Logf("blsAggregateVerifyNoCheckTestOne %v\n", n)
+	msgSize := 32
+	pubs := make([]PublicKey, n)
+	sigs := make([]Sign, n)
+	msgs := make([]byte, n*msgSize)
+	for i := 0; i < n; i++ {
+		var sec SecretKey
+		sec.SetByCSPRNG()
+		pubs[i] = *sec.GetPublicKey()
+
+		msgs[msgSize*i] = byte(i)
+		sigs[i] = *sec.SignByte(msgs[msgSize*i : msgSize*(i+1)])
+	}
+	var aggSig Sign
+	aggSig.Aggregate(sigs)
+	if !aggSig.AggregateVerifyNoCheck(pubs, msgs) {
+		t.Fatalf("bad AggregateVerifyNoCheck 1")
+	}
+	msgs[1] = 1
+	if aggSig.AggregateVerifyNoCheck(pubs, msgs) {
+		t.Fatalf("bad AggregateVerifyNoCheck 2")
+	}
+}
+
+func blsAggregateVerifyNoCheckTest(t *testing.T) {
+	nTbl := []int{1, 2, 15, 16, 17, 50}
+	for i := 0; i < len(nTbl); i++ {
+		blsAggregateVerifyNoCheckTestOne(t, nTbl[i])
+	}
+}
+
 func testEth(t *testing.T) {
 	SetETHmode(1)
 	ethAggregateTest(t)
 	ethSignTest(t)
 	ethAggregateVerifyNoCheckTest(t)
 	ethFastAggregateVerifyTest(t)
+	blsAggregateVerifyNoCheckTest(t)
 }
 
 func Test(t *testing.T) {
