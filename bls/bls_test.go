@@ -157,7 +157,9 @@ func TestAreAllMsgDifferent(t *testing.T) {
 
 func ethSignOneTest(t *testing.T, secHex string, msgHex string, sigHex string) {
 	var sec SecretKey
-	sec.DeserializeHexStr(secHex)
+	if sec.DeserializeHexStr(secHex) != nil {
+		t.Fatalf("bad sec")
+	}
 	pub := sec.GetPublicKey()
 	msg, _ := hex.DecodeString(msgHex)
 	sig := sec.SignByte(msg)
@@ -203,9 +205,11 @@ func ethAggregateTest(t *testing.T) {
 	n := len(msgHexTbl)
 	sigVec := make([]Sign, n)
 	for i, sigHex := range msgHexTbl {
-		var t Sign
-		t.DeserializeHexStr(sigHex)
-		sigVec[i] = t
+		var sig Sign
+		if sig.DeserializeHexStr(sigHex) != nil {
+			t.Fatalf("bad sig")
+		}
+		sigVec[i] = sig
 	}
 	var aggSig Sign
 	aggSig.Aggregate(sigVec)
@@ -229,11 +233,15 @@ func ethAggregateVerifyNoCheckTest(t *testing.T) {
 	sigHex := "82f5bfe5550ce639985a46545e61d47c5dd1d5e015c1a82e20673698b8e02cde4f81d3d4801f5747ad8cfd7f96a8fe50171d84b5d1e2549851588a5971d52037218d4260b9e4428971a5c1969c65388873f1c49a4c4d513bdf2bc478048a18a8"
 	n := len(pubHexTbl)
 	var sig Sign
-	sig.DeserializeHexStr(sigHex)
+	if sig.DeserializeHexStr(sigHex) != nil {
+		t.Fatalf("bad sig")
+	}
 	pubVec := make([]PublicKey, n)
 	var msgVec []byte
 	for i := 0; i < n; i++ {
-		pubVec[i].DeserializeHexStr(pubHexTbl[i])
+		if pubVec[i].DeserializeHexStr(pubHexTbl[i]) != nil {
+			t.Fatalf("bad pub")
+		}
 		b, _ := hex.DecodeString(msgHexTbl[i])
 		msgVec = append(msgVec, b...)
 	}
@@ -242,11 +250,62 @@ func ethAggregateVerifyNoCheckTest(t *testing.T) {
 	}
 }
 
+func ethFastAggregateVerifyTest(t *testing.T) {
+	fileName := "tests/fast_aggregate_verify.txt"
+	fp, err := os.Open(fileName)
+	if err != nil {
+		t.Fatalf("can't open %v %v", fileName, err)
+	}
+	defer fp.Close()
+
+	reader := csv.NewReader(fp)
+	reader.Comma = ' '
+	i := 0
+	for {
+		var pubVec []PublicKey
+		var s []string
+		var err error
+		for {
+			s, err = reader.Read()
+			if err == io.EOF {
+				return
+			}
+			if s[0] == "msg" {
+				break
+			}
+			var pub PublicKey
+			if pub.DeserializeHexStr(s[1]) != nil {
+				t.Fatalf("bad signature")
+			}
+			pubVec = append(pubVec, pub)
+		}
+		t.Logf("i=%v\n", i)
+		i++
+		msg, _ := hex.DecodeString(s[1])
+		sigHex, _ := reader.Read()
+		outHex, _ := reader.Read()
+		var sig Sign
+		if sig.DeserializeHexStr(sigHex[1]) != nil {
+			t.Logf("bad signature %v", sigHex[1])
+			continue
+		}
+		if !sig.IsValidOrder() {
+			t.Logf("bad order %v", sigHex[1])
+			continue
+		}
+		out := outHex[1] == "true"
+		if sig.FastAggregateVerify(pubVec, msg) != out {
+			t.Fatalf("bad FastAggregateVerify")
+		}
+	}
+}
+
 func testEth(t *testing.T) {
 	SetETHmode(1)
 	ethAggregateTest(t)
 	ethSignTest(t)
 	ethAggregateVerifyNoCheckTest(t)
+	ethFastAggregateVerifyTest(t)
 }
 
 func Test(t *testing.T) {
