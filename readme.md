@@ -9,6 +9,15 @@ This repository contains compiled static library of https://github.com/herumi/bl
 # News
 The new [eth2.0 functions](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/phase0/beacon-chain.md#bls-signatures) are supported.
 
+Init as the followings:
+
+```
+Init(BLS12_381)
+SetETHmode(1)
+```
+
+then, you can use the following functions.
+
 bls-eth-go-binary | eth2.0 spec name|
 ------|-----------------|
 SecretKey::SignByte|Sign|
