@@ -4,7 +4,27 @@ This repository contains compiled static library of https://github.com/herumi/bl
 
 * SecretKey; Fr
 * PublicKey; G1
-* Signature; G2
+* Sign; G2
+
+# News
+The new [eth2.0 functions](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/phase0/beacon-chain.md#bls-signatures) are supported.
+
+bls-eth-go-binary | eth2.0 spec name|
+------|-----------------|
+SecretKey::SignByte|Sign|
+PublicKey::VerifyByte|Verify|
+Sign::Aggregate|Aggregate|
+Sign::FastAggregateVerify|FastAggregateVerify|
+Sign::AggregateVerifyNoCheck|AggregateVerify|
+
+The size of message must be 32 byte.
+
+Check functions:
+- VerifySignatureOrder ; make `deserialize` check the correctness of the order
+- Sign::IsValidOrder ; check the correctness of the order
+- VerifyPublicKeyOrder ; make `deserialize` check the correctness of the order
+- PublicKey::IsValidOrder ; check the correctness of the order
+- AreAllMsgDifferent ; check that all messages are different each other
 
 # How to run sample.go
 ```
