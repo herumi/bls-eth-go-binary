@@ -36,6 +36,9 @@ func hex2byte(s string) ([]byte, error) {
 // call this function before calling all the other operations
 // this function is not thread safe
 func Init(curve int) error {
+	if curve != C.MCL_BLS12_381 {
+		return fmt.Errorf("ERR only BLS12-381")
+	}
 	err := C.blsInit(C.int(curve), C.MCLBN_COMPILED_TIME_VAR)
 	if err != 0 {
 		return fmt.Errorf("ERR Init curve=%d", curve)
@@ -157,7 +160,7 @@ type SecretKey struct {
 
 // Serialize --
 func (sec *SecretKey) Serialize() []byte {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 32)
 	// #nosec
 	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
 	if n == 0 {
@@ -354,7 +357,7 @@ func (keys PublicKeys) JSON() string {
 
 // Serialize --
 func (pub *PublicKey) Serialize() []byte {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 48)
 	// #nosec
 	n := C.blsPublicKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
 	if n == 0 {
@@ -452,7 +455,7 @@ type Sign struct {
 
 // Serialize --
 func (sig *Sign) Serialize() []byte {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 96)
 	// #nosec
 	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
 	if n == 0 {
@@ -692,7 +695,7 @@ func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) boo
 
 // SerializeUncompressed --
 func (pub *PublicKey) SerializeUncompressed() []byte {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 96)
 	// #nosec
 	n := C.blsPublicKeySerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
 	if n == 0 {
@@ -703,7 +706,7 @@ func (pub *PublicKey) SerializeUncompressed() []byte {
 
 // SerializeUncompressed --
 func (sig *Sign) SerializeUncompressed() []byte {
-	buf := make([]byte, 2048)
+	buf := make([]byte, 192)
 	// #nosec
 	n := C.blsSignatureSerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
 	if n == 0 {
