@@ -36,6 +36,9 @@ func hex2byte(s string) ([]byte, error) {
 // call this function before calling all the other operations
 // this function is not thread safe
 func Init(curve int) error {
+	if curve != C.MCL_BLS12_381 {
+		return fmt.Errorf("ERR only BLS12-381")
+	}
 	err := C.blsInit(C.int(curve), C.MCLBN_COMPILED_TIME_VAR)
 	if err != 0 {
 		return fmt.Errorf("ERR Init curve=%d", curve)
