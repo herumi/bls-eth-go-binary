@@ -1,5 +1,5 @@
 --- ../bls/ffi/go/bls/bls.go	2020-02-06 10:59:24.246393712 +0900
-+++ bls/bls.go	2020-03-09 16:48:57.110990922 +0900
++++ bls/bls.go	2020-03-10 18:25:35.748632661 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -121,14 +121,17 @@
  // VerifyAggregateHashWithDomain --
  // hashWithDomains is array of 40 * len(pubVec)
  func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-@@ -707,6 +748,93 @@ func (sig *Sign) VerifyAggregateHashWith
+@@ -707,6 +748,96 @@ func (sig *Sign) VerifyAggregateHashWith
  	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
  }
  
 +// SetETHmode --
 +// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
-+func SetETHmode(mode int) {
-+	C.blsSetETHmode(C.int(mode))
++func SetETHmode(mode int) error {
++	if err := C.blsSetETHmode(C.int(mode)); err != 0 {
++		return fmt.Errorf("got non-zero response code: %d", err)
++	}
++	return nil
 +}
 +
 +// SignatureVerifyOrder --
