@@ -339,7 +339,9 @@ func blsAggregateVerifyNoCheckTest(t *testing.T) {
 }
 
 func testEth(t *testing.T) {
-	SetETHmode(1)
+	if err := SetETHmode(1); err != nil {
+		t.Fatal(err)
+	}
 	ethAggregateTest(t)
 	ethSignTest(t)
 	ethAggregateVerifyNoCheckTest(t)
