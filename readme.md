@@ -35,10 +35,11 @@ Check functions:
 - PublicKey::IsValidOrder ; check the correctness of the order
 - AreAllMsgDifferent ; check that all messages are different each other
 
-# How to run sample.go
+# How to run `examples/sample.go`
+
 ```
 go get github.com/herumi/bls-eth-go-binary/
-go run sample.go
+go run examples/sample.go
 ```
 
 # How to build the static library
