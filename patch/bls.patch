@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2020-02-05 16:13:11.094627174 +0900
-+++ bls/bls.go	2020-02-05 16:18:03.303513015 +0900
+--- ../bls/ffi/go/bls/bls.go	2020-02-06 10:59:24.246393712 +0900
++++ bls/bls.go	2020-03-10 18:25:35.748632661 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -35,13 +35,50 @@
  #include <bls/bls.h>
  */
  import "C"
-@@ -694,6 +690,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
+@@ -40,6 +36,9 @@ func hex2byte(s string) ([]byte, error)
+ // call this function before calling all the other operations
+ // this function is not thread safe
+ func Init(curve int) error {
++	if curve != C.MCL_BLS12_381 {
++		return fmt.Errorf("ERR only BLS12-381")
++	}
+ 	err := C.blsInit(C.int(curve), C.MCLBN_COMPILED_TIME_VAR)
+ 	if err != 0 {
+ 		return fmt.Errorf("ERR Init curve=%d", curve)
+@@ -161,7 +160,7 @@ type SecretKey struct {
+ 
+ // Serialize --
+ func (sec *SecretKey) Serialize() []byte {
+-	buf := make([]byte, 2048)
++	buf := make([]byte, 32)
+ 	// #nosec
+ 	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
+ 	if n == 0 {
+@@ -358,7 +357,7 @@ func (keys PublicKeys) JSON() string {
+ 
+ // Serialize --
+ func (pub *PublicKey) Serialize() []byte {
+-	buf := make([]byte, 2048)
++	buf := make([]byte, 48)
+ 	// #nosec
+ 	n := C.blsPublicKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
+ 	if n == 0 {
+@@ -456,7 +455,7 @@ type Sign struct {
+ 
+ // Serialize --
+ func (sig *Sign) Serialize() []byte {
+-	buf := make([]byte, 2048)
++	buf := make([]byte, 96)
+ 	// #nosec
+ 	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
+ 	if n == 0 {
+@@ -694,6 +693,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
  	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
  }
  
 +// SerializeUncompressed --
 +func (pub *PublicKey) SerializeUncompressed() []byte {
-+	buf := make([]byte, 2048)
++	buf := make([]byte, 96)
 +	// #nosec
 +	n := C.blsPublicKeySerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
 +	if n == 0 {
@@ -52,7 +89,7 @@
 +
 +// SerializeUncompressed --
 +func (sig *Sign) SerializeUncompressed() []byte {
-+	buf := make([]byte, 2048)
++	buf := make([]byte, 192)
 +	// #nosec
 +	n := C.blsSignatureSerializeUncompressed(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
 +	if n == 0 {
@@ -84,14 +121,17 @@
  // VerifyAggregateHashWithDomain --
  // hashWithDomains is array of 40 * len(pubVec)
  func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-@@ -707,6 +745,93 @@ func (sig *Sign) VerifyAggregateHashWith
+@@ -707,6 +748,96 @@ func (sig *Sign) VerifyAggregateHashWith
  	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
  }
  
 +// SetETHmode --
 +// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
-+func SetETHmode(mode int) {
-+	C.blsSetETHmode(C.int(mode))
++func SetETHmode(mode int) error {
++	if err := C.blsSetETHmode(C.int(mode)); err != 0 {
++		return fmt.Errorf("got non-zero response code: %d", err)
++	}
++	return nil
 +}
 +
 +// SignatureVerifyOrder --

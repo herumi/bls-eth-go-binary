@@ -35,33 +35,35 @@ Check functions:
 - PublicKey::IsValidOrder ; check the correctness of the order
 - AreAllMsgDifferent ; check that all messages are different each other
 
-# How to run sample.go
+# How to run `examples/sample.go`
+
 ```
 go get github.com/herumi/bls-eth-go-binary/
-go run sample.go
+go run examples/sample.go
 ```
 
 # How to build the static library
 The following steps are not necessary if you use compiled binary in this repository.
 
+## Linux, Mac, Windows(mingw64)
 ```
 mkdir work
+cd work
 git clone https://github.com/herumi/mcl
 git clone https://github.com/herumi/bls
-```
-
-* Linux, Mac, Windows(mingw64)
-clang generates better binary than gcc.
-```
+git clone https://github.com/herumi/bls-eth-go-binary
+cd bls-eth-go-binary
 make CXX=clang++
 ```
 
-* Android
+clang generates better binary than gcc.
+
+## Android
 ```
 make android
 ```
 
-* iOS
+## iOS
 ```
 make ios
 ```

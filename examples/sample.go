@@ -25,7 +25,7 @@ func sample2() {
 	var sec bls.SecretKey
 	sec.DeserializeHexStr("47b8192d77bf871b62e87859d653922725724a5c031afeabc60bcef5ff665138")
 
-	msg := [40]byte{1,2,3}
+	msg := [40]byte{1, 2, 3}
 	fmt.Printf("sec=%v\n", sec.Serialize())
 	pub := sec.GetPublicKey()
 	fmt.Printf("pub=%s\n", pub.SerializeToHexStr())
