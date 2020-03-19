@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2020-02-06 10:59:24.246393712 +0900
-+++ bls/bls.go	2020-03-10 18:25:35.748632661 +0900
+--- ../bls/ffi/go/bls/bls.go	2020-03-19 13:24:07.910751295 +0900
++++ bls/bls.go	2020-03-19 13:29:06.964326264 +0900
 @@ -1,23 +1,19 @@
  package bls
  
@@ -72,10 +72,11 @@
  	// #nosec
  	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
  	if n == 0 {
-@@ -694,6 +693,48 @@ func (sig *Sign) VerifyHashWithDomain(pu
- 	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
+@@ -744,3 +743,135 @@ func SetRandFunc(randReader io.Reader) {
+ func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
+ 	C.blsGetGeneratorOfPublicKey(&pub.v)
  }
- 
++
 +// SerializeUncompressed --
 +func (pub *PublicKey) SerializeUncompressed() []byte {
 +	buf := make([]byte, 96)
@@ -118,61 +119,15 @@
 +	return nil
 +}
 +
- // VerifyAggregateHashWithDomain --
- // hashWithDomains is array of 40 * len(pubVec)
- func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-@@ -707,6 +748,96 @@ func (sig *Sign) VerifyAggregateHashWith
- 	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
- }
- 
 +// SetETHmode --
-+// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
++// 0 ; old version
++// 1 ; draft 05
++// 2 ; draft 06
 +func SetETHmode(mode int) error {
 +	if err := C.blsSetETHmode(C.int(mode)); err != 0 {
 +		return fmt.Errorf("got non-zero response code: %d", err)
 +	}
 +	return nil
-+}
-+
-+// SignatureVerifyOrder --
-+// check the correctness of the order of signature in deserialize if true
-+func SignatureVerifyOrder(doVerify bool) {
-+	var b = 0
-+	if doVerify {
-+		b = 1
-+	}
-+	C.blsSignatureVerifyOrder(C.int(b))
-+}
-+
-+// SignByte --
-+func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
-+	sig = new(Sign)
-+	// #nosec
-+	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
-+	return sig
-+}
-+
-+// VerifyByte --
-+func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
-+	if sig == nil || pub == nil {
-+		return false
-+	}
-+	// #nosec
-+	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
-+}
-+
-+// Aggregate --
-+func (sig *Sign) Aggregate(sigVec []Sign) {
-+	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
-+}
-+
-+// FastAggregateVerify --
-+func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
-+	if pubVec == nil {
-+		return false
-+	}
-+	n := len(pubVec)
-+	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
 +}
 +
 +func AreAllMsgDifferent(msgVec []byte, msgSize int) bool {
@@ -215,6 +170,41 @@
 +	return sig.innerAggregateVerify(pubVec, msgVec, true)
 +}
 +
- ///
- 
- var sRandReader io.Reader
++// SignHashWithDomain -- duplicated for mode > 0
++func (sec *SecretKey) SignHashWithDomain(hashWithDomain []byte) (sig *Sign) {
++	if len(hashWithDomain) != 40 {
++		return nil
++	}
++	sig = new(Sign)
++	// #nosec
++	err := C.blsSignHashWithDomain(&sig.v, &sec.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0])))
++	if err == 0 {
++		return sig
++	}
++	return nil
++}
++
++// VerifyHashWithDomain -- duplicated for mode > 0
++func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) bool {
++	if len(hashWithDomain) != 40 {
++		return false
++	}
++	if pub == nil {
++		return false
++	}
++	// #nosec
++	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
++}
++
++// VerifyAggregateHashWithDomain -- duplicated for mode > 0
++// hashWithDomains is array of 40 * len(pubVec)
++func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
++	if pubVec == nil {
++		return false
++	}
++	n := len(pubVec)
++	if n == 0 || len(hashWithDomains) != n*40 {
++		return false
++	}
++	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
++}

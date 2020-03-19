@@ -667,30 +667,81 @@ func (sig *Sign) VerifyAggregateHashes(pubVec []PublicKey, hash [][]byte) bool {
 	return C.blsVerifyAggregatedHashes(&sig.v, &pubVec[0].v, unsafe.Pointer(&h[0]), C.mclSize(hashByte), C.mclSize(n)) == 1
 }
 
-// SignHashWithDomain --
-func (sec *SecretKey) SignHashWithDomain(hashWithDomain []byte) (sig *Sign) {
-	if len(hashWithDomain) != 40 {
-		return nil
+// SignatureVerifyOrder --
+// check the correctness of the order of signature in deserialize if true
+func SignatureVerifyOrder(doVerify bool) {
+	var b = 0
+	if doVerify {
+		b = 1
 	}
-	sig = new(Sign)
-	// #nosec
-	err := C.blsSignHashWithDomain(&sig.v, &sec.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0])))
-	if err == 0 {
-		return sig
-	}
-	return nil
+	C.blsSignatureVerifyOrder(C.int(b))
 }
 
-// VerifyHashWithDomain --
-func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) bool {
-	if len(hashWithDomain) != 40 {
-		return false
-	}
-	if pub == nil {
+// SignByte --
+func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
+	sig = new(Sign)
+	// #nosec
+	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
+	return sig
+}
+
+// VerifyByte --
+func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
+	if sig == nil || pub == nil {
 		return false
 	}
 	// #nosec
-	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
+	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+}
+
+// Aggregate --
+func (sig *Sign) Aggregate(sigVec []Sign) {
+	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
+}
+
+// FastAggregateVerify --
+func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
+	if pubVec == nil {
+		return false
+	}
+	n := len(pubVec)
+	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+}
+
+///
+
+var sRandReader io.Reader
+
+func createSlice(buf *C.char, n C.uint) []byte {
+	size := int(n)
+	return (*[1 << 30]byte)(unsafe.Pointer(buf))[:size:size]
+}
+
+// this function can't be put in callback.go
+//export wrapReadRandGo
+func wrapReadRandGo(buf *C.char, n C.uint) C.uint {
+	slice := createSlice(buf, n)
+	ret, err := sRandReader.Read(slice)
+	if ret == int(n) && err == nil {
+		return n
+	}
+	return 0
+}
+
+// SetRandFunc --
+func SetRandFunc(randReader io.Reader) {
+	sRandReader = randReader
+	if randReader != nil {
+		C.blsSetRandFunc(nil, C.ReadRandFunc(unsafe.Pointer(C.wrapReadRandCgo)))
+	} else {
+		// use default random generator
+		C.blsSetRandFunc(nil, C.ReadRandFunc(unsafe.Pointer(nil)))
+	}
+}
+
+// BlsGetGeneratorOfPublicKey -
+func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
+	C.blsGetGeneratorOfPublicKey(&pub.v)
 }
 
 // SerializeUncompressed --
@@ -735,67 +786,15 @@ func (sig *Sign) DeserializeUncompressed(buf []byte) error {
 	return nil
 }
 
-// VerifyAggregateHashWithDomain --
-// hashWithDomains is array of 40 * len(pubVec)
-func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-	if pubVec == nil {
-		return false
-	}
-	n := len(pubVec)
-	if n == 0 || len(hashWithDomains) != n*40 {
-		return false
-	}
-	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
-}
-
 // SetETHmode --
-// 0 ; old version, 1 ; latest(eth2.0-spec phase0)
+// 0 ; old version
+// 1 ; draft 05
+// 2 ; draft 06
 func SetETHmode(mode int) error {
 	if err := C.blsSetETHmode(C.int(mode)); err != 0 {
 		return fmt.Errorf("got non-zero response code: %d", err)
 	}
 	return nil
-}
-
-// SignatureVerifyOrder --
-// check the correctness of the order of signature in deserialize if true
-func SignatureVerifyOrder(doVerify bool) {
-	var b = 0
-	if doVerify {
-		b = 1
-	}
-	C.blsSignatureVerifyOrder(C.int(b))
-}
-
-// SignByte --
-func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
-	sig = new(Sign)
-	// #nosec
-	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
-	return sig
-}
-
-// VerifyByte --
-func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
-	if sig == nil || pub == nil {
-		return false
-	}
-	// #nosec
-	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
-}
-
-// Aggregate --
-func (sig *Sign) Aggregate(sigVec []Sign) {
-	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
-}
-
-// FastAggregateVerify --
-func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
-	if pubVec == nil {
-		return false
-	}
-	n := len(pubVec)
-	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
 }
 
 func AreAllMsgDifferent(msgVec []byte, msgSize int) bool {
@@ -838,38 +837,41 @@ func (sig *Sign) AggregateVerify(pubVec []PublicKey, msgVec []byte) bool {
 	return sig.innerAggregateVerify(pubVec, msgVec, true)
 }
 
-///
-
-var sRandReader io.Reader
-
-func createSlice(buf *C.char, n C.uint) []byte {
-	size := int(n)
-	return (*[1 << 30]byte)(unsafe.Pointer(buf))[:size:size]
-}
-
-// this function can't be put in callback.go
-//export wrapReadRandGo
-func wrapReadRandGo(buf *C.char, n C.uint) C.uint {
-	slice := createSlice(buf, n)
-	ret, err := sRandReader.Read(slice)
-	if ret == int(n) && err == nil {
-		return n
+// SignHashWithDomain -- duplicated for mode > 0
+func (sec *SecretKey) SignHashWithDomain(hashWithDomain []byte) (sig *Sign) {
+	if len(hashWithDomain) != 40 {
+		return nil
 	}
-	return 0
-}
-
-// SetRandFunc --
-func SetRandFunc(randReader io.Reader) {
-	sRandReader = randReader
-	if randReader != nil {
-		C.blsSetRandFunc(nil, C.ReadRandFunc(unsafe.Pointer(C.wrapReadRandCgo)))
-	} else {
-		// use default random generator
-		C.blsSetRandFunc(nil, C.ReadRandFunc(unsafe.Pointer(nil)))
+	sig = new(Sign)
+	// #nosec
+	err := C.blsSignHashWithDomain(&sig.v, &sec.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0])))
+	if err == 0 {
+		return sig
 	}
+	return nil
 }
 
-// BlsGetGeneratorOfPublicKey -
-func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
-	C.blsGetGeneratorOfPublicKey(&pub.v)
+// VerifyHashWithDomain -- duplicated for mode > 0
+func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) bool {
+	if len(hashWithDomain) != 40 {
+		return false
+	}
+	if pub == nil {
+		return false
+	}
+	// #nosec
+	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
+}
+
+// VerifyAggregateHashWithDomain -- duplicated for mode > 0
+// hashWithDomains is array of 40 * len(pubVec)
+func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
+	if pubVec == nil {
+		return false
+	}
+	n := len(pubVec)
+	if n == 0 || len(hashWithDomains) != n*40 {
+		return false
+	}
+	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
 }
