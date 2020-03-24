@@ -1,6 +1,6 @@
---- ../bls/ffi/go/bls/bls.go	2020-03-19 13:24:07.910751295 +0900
-+++ bls/bls.go	2020-03-19 13:29:06.964326264 +0900
-@@ -1,23 +1,19 @@
+--- ../bls/ffi/go/bls/bls.go	2020-03-19 13:55:42.000000000 +0900
++++ bls/bls.go	2020-03-24 11:57:30.663500840 +0900
+@@ -1,23 +1,20 @@
  package bls
  
  /*
@@ -26,6 +26,7 @@
 +#cgo android,arm LDFLAGS:-L${SRCDIR}/lib/android/armeabi-v7a
 +#cgo android,amd64 LDFLAGS:-L${SRCDIR}/lib/android/x86_64
 +#cgo linux,amd64 LDFLAGS:-L${SRCDIR}/lib/linux/amd64
++#cgo linux,arm64 LDFLAGS:-L${SRCDIR}/lib/linux/arm64
 +#cgo darwin,amd64 LDFLAGS:-L${SRCDIR}/lib/darwin/amd64
 +#cgo darwin,arm64 LDFLAGS:-L${SRCDIR}/lib/darwin/arm64
 +#cgo windows,amd64 LDFLAGS:-L${SRCDIR}/lib/windows/amd64
@@ -35,7 +36,7 @@
  #include <bls/bls.h>
  */
  import "C"
-@@ -40,6 +36,9 @@ func hex2byte(s string) ([]byte, error)
+@@ -40,6 +37,9 @@ func hex2byte(s string) ([]byte, error)
  // call this function before calling all the other operations
  // this function is not thread safe
  func Init(curve int) error {
@@ -45,7 +46,7 @@
  	err := C.blsInit(C.int(curve), C.MCLBN_COMPILED_TIME_VAR)
  	if err != 0 {
  		return fmt.Errorf("ERR Init curve=%d", curve)
-@@ -161,7 +160,7 @@ type SecretKey struct {
+@@ -161,7 +161,7 @@ type SecretKey struct {
  
  // Serialize --
  func (sec *SecretKey) Serialize() []byte {
@@ -54,7 +55,7 @@
  	// #nosec
  	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
  	if n == 0 {
-@@ -358,7 +357,7 @@ func (keys PublicKeys) JSON() string {
+@@ -358,7 +358,7 @@ func (keys PublicKeys) JSON() string {
  
  // Serialize --
  func (pub *PublicKey) Serialize() []byte {
@@ -63,7 +64,7 @@
  	// #nosec
  	n := C.blsPublicKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
  	if n == 0 {
-@@ -456,7 +455,7 @@ type Sign struct {
+@@ -456,7 +456,7 @@ type Sign struct {
  
  // Serialize --
  func (sig *Sign) Serialize() []byte {
@@ -72,7 +73,7 @@
  	// #nosec
  	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
  	if n == 0 {
-@@ -744,3 +743,135 @@ func SetRandFunc(randReader io.Reader) {
+@@ -744,3 +744,135 @@ func SetRandFunc(randReader io.Reader) {
  func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
  	C.blsGetGeneratorOfPublicKey(&pub.v)
  }

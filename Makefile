@@ -19,6 +19,13 @@ ifeq ($(OS),mac)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
 endif
+ifeq ($(CPU),aarch64)
+	$(eval _ARCH=arm64)
+ifeq ($(OS),Linux)
+	$(eval _OS=linux)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+endif
+endif
 	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
 	-mkdir -p $(LIB_DIR)
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
