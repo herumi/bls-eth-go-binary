@@ -7,7 +7,8 @@ This repository contains compiled static library of https://github.com/herumi/bl
 * Sign; G2
 
 # News
-This library supports [eth2.0 functions](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/phase0/beacon-chain.md#bls-signatures). But the spec of hash-to-curve function may be changed.
+- 2020/Mar/26 The signature value in `SetETHmode(2)` has changed because of changing DST in hash-to-curve function.
+- 2020/Mar/17 This library supports [eth2.0 functions](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/phase0/beacon-chain.md#bls-signatures). But the spec of hash-to-curve function may be changed.
 
 * `SetETHmode(1)` supports draft-irtf-cfrg-hash-to-curve-05, which will be removed in the near future.
 * `SetETHmode(2)` supports [draft-irtf-cfrg-hash-to-curve-06](https://cfrg.github.io/draft-irtf-cfrg-hash-to-curve/draft-irtf-cfrg-hash-to-curve.txt) at March 2020. But it has not yet fully tested.
