@@ -1,5 +1,5 @@
---- ../bls/ffi/go/bls/bls.go	2020-03-19 13:55:42.000000000 +0900
-+++ bls/bls.go	2020-03-24 11:57:30.663500840 +0900
+--- ../bls/ffi/go/bls/bls.go	2020-04-02 14:57:28.146575106 +0900
++++ bls/bls.go	2020-04-20 14:14:37.959090011 +0900
 @@ -1,23 +1,20 @@
  package bls
  
@@ -36,7 +36,19 @@
  #include <bls/bls.h>
  */
  import "C"
-@@ -40,6 +37,9 @@ func hex2byte(s string) ([]byte, error)
+@@ -29,6 +26,11 @@ import (
+ 	"unsafe"
+ )
+ 
++const EthModeOld = C.BLS_ETH_MODE_OLD
++const EthModeDraft05 = C.BLS_ETH_MODE_DRAFT_05
++const EthModeDraft06 = C.BLS_ETH_MODE_DRAFT_06
++const EthModeLatest = C.BLS_ETH_MODE_LATEST
++
+ func hex2byte(s string) ([]byte, error) {
+ 	if (len(s) & 1) == 1 {
+ 		return nil, fmt.Errorf("odd length")
+@@ -40,6 +42,9 @@ func hex2byte(s string) ([]byte, error)
  // call this function before calling all the other operations
  // this function is not thread safe
  func Init(curve int) error {
@@ -46,7 +58,7 @@
  	err := C.blsInit(C.int(curve), C.MCLBN_COMPILED_TIME_VAR)
  	if err != 0 {
  		return fmt.Errorf("ERR Init curve=%d", curve)
-@@ -161,7 +161,7 @@ type SecretKey struct {
+@@ -161,7 +166,7 @@ type SecretKey struct {
  
  // Serialize --
  func (sec *SecretKey) Serialize() []byte {
@@ -55,7 +67,7 @@
  	// #nosec
  	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
  	if n == 0 {
-@@ -358,7 +358,7 @@ func (keys PublicKeys) JSON() string {
+@@ -358,7 +363,7 @@ func (keys PublicKeys) JSON() string {
  
  // Serialize --
  func (pub *PublicKey) Serialize() []byte {
@@ -64,7 +76,7 @@
  	// #nosec
  	n := C.blsPublicKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
  	if n == 0 {
-@@ -456,7 +456,7 @@ type Sign struct {
+@@ -456,7 +461,7 @@ type Sign struct {
  
  // Serialize --
  func (sig *Sign) Serialize() []byte {
@@ -73,7 +85,76 @@
  	// #nosec
  	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
  	if n == 0 {
-@@ -744,3 +744,135 @@ func SetRandFunc(randReader io.Reader) {
+@@ -668,43 +673,45 @@ func (sig *Sign) VerifyAggregateHashes(p
+ 	return C.blsVerifyAggregatedHashes(&sig.v, &pubVec[0].v, unsafe.Pointer(&h[0]), C.mclSize(hashByte), C.mclSize(n)) == 1
+ }
+ 
+-// SignHashWithDomain --
+-func (sec *SecretKey) SignHashWithDomain(hashWithDomain []byte) (sig *Sign) {
+-	if len(hashWithDomain) != 40 {
+-		return nil
++// SignatureVerifyOrder --
++// check the correctness of the order of signature in deserialize if true
++func SignatureVerifyOrder(doVerify bool) {
++	var b = 0
++	if doVerify {
++		b = 1
+ 	}
++	C.blsSignatureVerifyOrder(C.int(b))
++}
++
++// SignByte --
++func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
+ 	sig = new(Sign)
+ 	// #nosec
+-	err := C.blsSignHashWithDomain(&sig.v, &sec.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0])))
+-	if err == 0 {
+-		return sig
+-	}
+-	return nil
++	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
++	return sig
+ }
+ 
+-// VerifyHashWithDomain --
+-func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) bool {
+-	if len(hashWithDomain) != 40 {
+-		return false
+-	}
+-	if pub == nil {
++// VerifyByte --
++func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
++	if sig == nil || pub == nil {
+ 		return false
+ 	}
+ 	// #nosec
+-	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
++	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+ }
+ 
+-// VerifyAggregateHashWithDomain --
+-// hashWithDomains is array of 40 * len(pubVec)
+-func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
++// Aggregate --
++func (sig *Sign) Aggregate(sigVec []Sign) {
++	C.blsAggregateSignature(&sig.v, &sigVec[0].v, C.mclSize(len(sigVec)))
++}
++
++// FastAggregateVerify --
++func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
+ 	if pubVec == nil {
+ 		return false
+ 	}
+ 	n := len(pubVec)
+-	if n == 0 || len(hashWithDomains) != n*40 {
+-		return false
+-	}
+-	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
++	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+ }
+ 
+ ///
+@@ -742,3 +749,135 @@ func SetRandFunc(randReader io.Reader) {
  func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
  	C.blsGetGeneratorOfPublicKey(&pub.v)
  }

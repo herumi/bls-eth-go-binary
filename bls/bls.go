@@ -26,6 +26,11 @@ import (
 	"unsafe"
 )
 
+const EthModeOld = C.BLS_ETH_MODE_OLD
+const EthModeDraft05 = C.BLS_ETH_MODE_DRAFT_05
+const EthModeDraft06 = C.BLS_ETH_MODE_DRAFT_06
+const EthModeLatest = C.BLS_ETH_MODE_LATEST
+
 func hex2byte(s string) ([]byte, error) {
 	if (len(s) & 1) == 1 {
 		return nil, fmt.Errorf("odd length")

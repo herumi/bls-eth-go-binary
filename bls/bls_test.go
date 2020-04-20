@@ -338,8 +338,8 @@ func blsAggregateVerifyNoCheckTest(t *testing.T) {
 	}
 }
 
-func testEth(t *testing.T) {
-	if err := SetETHmode(1); err != nil {
+func testEthDraft05(t *testing.T) {
+	if err := SetETHmode(EthModeDraft05); err != nil {
 		t.Fatal(err)
 	}
 	ethAggregateTest(t)
@@ -347,6 +347,16 @@ func testEth(t *testing.T) {
 	ethAggregateVerifyNoCheckTest(t)
 	ethFastAggregateVerifyTest(t)
 	blsAggregateVerifyNoCheckTest(t)
+}
+
+func testEthDraft06(t *testing.T) {
+	if err := SetETHmode(EthModeDraft06); err != nil {
+		t.Fatal(err)
+	}
+	secHex := "0000000000000000000000000000000000000000000000000000000000000001"
+	msgHex := "61736466"
+	sigHex := "8c858cfbec5fed26cdf9368337900a7bec132b4356e959d9e94b8e9178f8669598a46cd12eadf2226d796f6429b527fc067112244c2b15f3b7f6d5f6304c51a7b087664eaabc3c76e745daeafe6930f5699a6a0d4a24486aa886b3770a63ed32"
+	ethSignOneTest(t, secHex, msgHex, sigHex)
 }
 
 func testVerifyHashWithDomain(t *testing.T) {
@@ -397,7 +407,8 @@ func Test(t *testing.T) {
 	testSignAndVerifyHash(t)
 	testVerifyAggreageteHash(t)
 	testVerifyHashWithDomain(t)
-	testEth(t)
+	testEthDraft05(t)
+	testEthDraft06(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
