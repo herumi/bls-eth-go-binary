@@ -79,3 +79,9 @@ make ios
 #include <mcl/bn_c384_256.h>
 #include <bls/bls.h>
 ```
+
+## Author
+MITSUNARI Shigeo(herumi@nifty.com)
+
+## Sponsors welcome
+[GitHub Sponsor](https://github.com/sponsors/herumi)
