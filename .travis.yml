@@ -2,7 +2,7 @@ arch:
 - amd64
 - arm64
 os:
-#- linux
+- linux
 - osx
 osx_image: xcode11.3
 
