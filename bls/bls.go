@@ -16,6 +16,11 @@ typedef unsigned int (*ReadRandFunc)(void *, void *, unsigned int);
 int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 #include <mcl/bn_c384_256.h>
 #include <bls/bls.h>
+inline int blsVerifyAggregatedHashWithDomainCast(const blsSignature *aggSig, const blsPublicKey *pubVec, const unsigned char *hashWithDomain, mclSize n)
+{
+	typedef const unsigned char type[40];
+	return blsVerifyAggregatedHashWithDomain(aggSig, pubVec, (type*)hashWithDomain, n);
+}
 */
 import "C"
 import (
@@ -879,5 +884,5 @@ func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomai
 	if n == 0 || len(hashWithDomains) != n*40 {
 		return false
 	}
-	return C.blsVerifyAggregatedHashWithDomain(&sig.v, &pubVec[0].v, (*[40]C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
+	return C.blsVerifyAggregatedHashWithDomainCast(&sig.v, &pubVec[0].v, (*C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
 }
