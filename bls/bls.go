@@ -16,6 +16,7 @@ typedef unsigned int (*ReadRandFunc)(void *, void *, unsigned int);
 int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 #include <mcl/bn_c384_256.h>
 #include <bls/bls.h>
+// This wrapper function is only for travi-ci on linux
 inline int blsVerifyAggregatedHashWithDomainCast(const blsSignature *aggSig, const blsPublicKey *pubVec, const unsigned char *hashWithDomain, mclSize n)
 {
 	typedef const unsigned char type[40];
