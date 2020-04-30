@@ -10,8 +10,5 @@ language: go
 go:
 - 1.12.x
 
-script:
-- echo ${CC}
-- ${CC} --version
-- go test -v ./bls
+script: go test -v ./bls
  
