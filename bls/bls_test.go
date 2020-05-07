@@ -141,17 +141,64 @@ func testVerifyAggreageteHash(t *testing.T) {
 }
 
 func TestAreAllMsgDifferent(t *testing.T) {
-	type V struct {
-		s       string
-		msgSize int
-		result  bool
+	padTo32Bytes := func(b []byte) []byte {
+		dst := [32]byte{}
+		copy(dst[:], b)
+		return dst[:]
 	}
-	m := []V{V{"abcdabce", 4, true},
-		V{"abcdabce", 2, false}, V{"abcdefgh", 2, true}, V{"xyzxyz", 2, true}, V{"xyzxyz", 3, false}}
-	for _, v := range m {
-		if AreAllMsgDifferent([]byte(v.s), v.msgSize) != v.result {
-			t.Fatalf("err %v %v\n", v.s, v.msgSize)
+	makeMsg := func (b... []byte) []byte {
+		var dst []byte
+		for _, bb := range b {
+			dst = append(dst, padTo32Bytes(bb)...)
 		}
+		return dst
+	}
+	type args struct {
+		msgVec []byte
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "all unique",
+			args: args{
+				msgVec: makeMsg(
+					[]byte("a"),
+					[]byte("b"),
+					[]byte("c"),
+					[]byte("d"),
+					[]byte("e"),
+				),
+			},
+			want: true,
+		}, {
+			name: "some duplicates",
+			args: args{
+				msgVec: makeMsg(
+					[]byte("a"),
+					[]byte("b"),
+					[]byte("c"),
+					[]byte("a"),
+					[]byte("a"),
+				),
+			},
+			want: false,
+		}, {
+			name: "empty input",
+			args: args{
+				msgVec: []byte{},
+			},
+			want: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := AreAllMsgDifferent(tt.args.msgVec); got != tt.want {
+				t.Errorf("AreAllMsgDifferent() = %v, want %v", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -245,7 +292,7 @@ func ethAggregateVerifyNoCheckTest(t *testing.T) {
 		b, _ := hex.DecodeString(msgHexTbl[i])
 		msgVec = append(msgVec, b...)
 	}
-	if !AreAllMsgDifferent(msgVec, 32) {
+	if !AreAllMsgDifferent(msgVec) {
 		t.Fatalf("bad msgVec")
 	}
 	if !sig.AggregateVerifyNoCheck(pubVec, msgVec) {
@@ -317,7 +364,7 @@ func blsAggregateVerifyNoCheckTestOne(t *testing.T, n int) {
 		msgs[msgSize*i] = byte(i)
 		sigs[i] = *sec.SignByte(msgs[msgSize*i : msgSize*(i+1)])
 	}
-	if !AreAllMsgDifferent(msgs, msgSize) {
+	if !AreAllMsgDifferent(msgs) {
 		t.Fatalf("bad msgs")
 	}
 	var aggSig Sign

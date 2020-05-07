@@ -809,12 +809,14 @@ func SetETHmode(mode int) error {
 	return nil
 }
 
-func AreAllMsgDifferent(msgVec []byte, msgSize int) bool {
-	n := len(msgVec) / msgSize
-	// How can I use []byte instead of string?
-	set := map[string]struct{}{}
+// AreAllMsgDifferent checks the given message slice to ensure that each 32 byte segment is unique.
+func AreAllMsgDifferent(msgVec []byte) bool {
+	const MSG_SIZE = 32
+	n := len(msgVec) / MSG_SIZE
+	set := make(map[[MSG_SIZE]byte]struct{}, MSG_SIZE)
+	msg := [MSG_SIZE]byte{}
 	for i := 0; i < n; i++ {
-		msg := string(msgVec[i*msgSize : (i+1)*msgSize])
+		copy(msg[:], msgVec[i*MSG_SIZE : (i+1)*MSG_SIZE])
 		_, ok := set[msg]
 		if ok {
 			return false
@@ -830,7 +832,7 @@ func (sig *Sign) innerAggregateVerify(pubVec []PublicKey, msgVec []byte, checkMe
 	if n == 0 || len(msgVec) != MSG_SIZE*n {
 		return false
 	}
-	if checkMessage && !AreAllMsgDifferent(msgVec, MSG_SIZE) {
+	if checkMessage && !AreAllMsgDifferent(msgVec) {
 		return false
 	}
 	return C.blsAggregateVerifyNoCheck(&sig.v, &pubVec[0].v, unsafe.Pointer(&msgVec[0]), MSG_SIZE, C.mclSize(n)) == 1
