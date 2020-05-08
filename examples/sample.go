@@ -34,8 +34,23 @@ func sample2() {
 	fmt.Printf("verify=%v\n", sig.VerifyHashWithDomain(pub, msg[:]))
 }
 
+func sample3() {
+	var sec bls.SecretKey
+	b := make([]byte, 64)
+	for i := 0; i < len(b); i++ {
+		b[i] = 0xff
+	}
+	err := sec.SetLittleEndianMod(b)
+	if err != nil {
+		fmt.Printf("err")
+		return
+	}
+	fmt.Printf("sec=%x\n", sec.Serialize())
+}
+
 func main() {
 	bls.Init(bls.BLS12_381)
 	sample1()
 	sample2()
+	sample3()
 }
