@@ -186,6 +186,43 @@ func TestAreAllMsgDifferent(t *testing.T) {
 			},
 			want: false,
 		}, {
+			name: "long string1",
+			args: args{
+				msgVec: makeMsg(
+					[]byte("abcdefg"),
+					[]byte("csadfasdfasereaaesfaefa"),
+					[]byte("01234567890123456789012345678901"),
+					[]byte("xxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxxxx"),
+				),
+			},
+			want: true,
+		}, {
+			name: "long string2",
+			args: args{
+				msgVec: makeMsg(
+					[]byte("abcdefg"),
+					[]byte("csadfasdfasereaaesfaefa"),
+					[]byte("01234567890123456789012345678901"),
+					[]byte("xxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxxx"),
+					[]byte("xxxxxxxxxxxxxxxxxxxxxx"),
+					[]byte("01234567890123456789012345678901"),
+				),
+			},
+			want: false,
+		}, {
 			name: "empty input",
 			args: args{
 				msgVec: []byte{},
