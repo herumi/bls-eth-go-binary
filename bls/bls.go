@@ -816,7 +816,7 @@ func AreAllMsgDifferent(msgVec []byte) bool {
 	set := make(map[[MSG_SIZE]byte]struct{}, MSG_SIZE)
 	msg := [MSG_SIZE]byte{}
 	for i := 0; i < n; i++ {
-		copy(msg[:], msgVec[i*MSG_SIZE : (i+1)*MSG_SIZE])
+		copy(msg[:], msgVec[i*MSG_SIZE:(i+1)*MSG_SIZE])
 		_, ok := set[msg]
 		if ok {
 			return false

@@ -146,7 +146,7 @@ func TestAreAllMsgDifferent(t *testing.T) {
 		copy(dst[:], b)
 		return dst[:]
 	}
-	makeMsg := func (b... []byte) []byte {
+	makeMsg := func(b ...[]byte) []byte {
 		var dst []byte
 		for _, bb := range b {
 			dst = append(dst, padTo32Bytes(bb)...)
