@@ -817,26 +817,10 @@ func AreAllMsgDifferent(msgVec []byte) bool {
 		return false
 	}
 	set := make(map[[MSG_SIZE]byte]struct{}, n)
-	for i := 0; i < n; i++ {
-		msg := *(*[MSG_SIZE]byte)(unsafe.Pointer(&msgVec[i*MSG_SIZE : (i+1)*MSG_SIZE][0]))
-		_, ok := set[msg]
-		if ok {
-			return false
-		}
-		set[msg] = struct{}{}
-	}
-	return true
-}
-
-func AreAllMsgDifferent2(msgVec []byte) bool {
-	const MSG_SIZE = 32
-	n := len(msgVec) / MSG_SIZE
-	if n*MSG_SIZE != len(msgVec) {
-		return false
-	}
-	set := make(map[[MSG_SIZE]byte]struct{}, n)
 	msg := [MSG_SIZE]byte{}
 	for i := 0; i < n; i++ {
+		// one copy can be reduced by unsafe.Pointer
+		// msg := *(*[MSG_SIZE]byte)(unsafe.Pointer(&msgVec[i*MSG_SIZE : (i+1)*MSG_SIZE][0]))
 		copy(msg[:], msgVec[i*MSG_SIZE:(i+1)*MSG_SIZE])
 		_, ok := set[msg]
 		if ok {

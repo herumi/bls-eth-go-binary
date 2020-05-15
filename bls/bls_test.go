@@ -597,27 +597,13 @@ func BenchmarkDeserialization2(b *testing.B) {
 	}
 }
 
-const N = 32 * 3000
-
-var msgVec []byte
-
-func initForAreAllMsgDifferent() {
-	msgVec = make([]byte, N)
-	rand.Read(msgVec)
-}
-
 func BenchmarkAreAllMsgDifferent(b *testing.B) {
 	b.StopTimer()
-	initForAreAllMsgDifferent()
+	const N = 32 * 3000
+	msgVec := make([]byte, N)
 	rand.Read(msgVec)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		AreAllMsgDifferent(msgVec)
-	}
-}
-
-func BenchmarkAreAllMsgDifferent2(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		AreAllMsgDifferent2(msgVec)
 	}
 }
