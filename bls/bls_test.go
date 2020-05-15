@@ -444,6 +444,16 @@ func testEthDraft06(t *testing.T) {
 	ethSignOneTest(t, secHex, msgHex, sigHex)
 }
 
+func testEthDraft07(t *testing.T) {
+	if err := SetETHmode(EthModeDraft07); err != nil {
+		t.Fatal(err)
+	}
+	secHex := "0000000000000000000000000000000000000000000000000000000000000001"
+	msgHex := "61736466"
+	sigHex := "b45a264e0d6f8614c4640ea97bae13effd3c74c4e200e3b1596d6830debc952602a7d210eca122dc4f596fa01d7f6299106933abd29477606f64588595e18349afe22ecf2aeeeb63753e88a42ef85b24140847e05620a28422f8c30f1d33b9aa";
+	ethSignOneTest(t, secHex, msgHex, sigHex)
+}
+
 func testVerifyHashWithDomain(t *testing.T) {
 	const S = 40
 	const N = 10
@@ -494,6 +504,7 @@ func Test(t *testing.T) {
 	testVerifyHashWithDomain(t)
 	testEthDraft05(t)
 	testEthDraft06(t)
+	testEthDraft07(t)
 }
 
 func BenchmarkPairing(b *testing.B) {

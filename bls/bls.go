@@ -35,6 +35,7 @@ import (
 const EthModeOld = C.BLS_ETH_MODE_OLD
 const EthModeDraft05 = C.BLS_ETH_MODE_DRAFT_05
 const EthModeDraft06 = C.BLS_ETH_MODE_DRAFT_06
+const EthModeDraft07 = C.BLS_ETH_MODE_DRAFT_07
 const EthModeLatest = C.BLS_ETH_MODE_LATEST
 
 func hex2byte(s string) ([]byte, error) {
