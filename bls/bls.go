@@ -16,12 +16,6 @@ typedef unsigned int (*ReadRandFunc)(void *, void *, unsigned int);
 int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 #include <mcl/bn_c384_256.h>
 #include <bls/bls.h>
-// This wrapper function is only for travi-ci on linux
-inline int blsVerifyAggregatedHashWithDomainCast(const blsSignature *aggSig, const blsPublicKey *pubVec, const unsigned char *hashWithDomain, mclSize n)
-{
-	typedef const unsigned char type[40];
-	return blsVerifyAggregatedHashWithDomain(aggSig, pubVec, (type*)hashWithDomain, n);
-}
 */
 import "C"
 import (
@@ -881,17 +875,4 @@ func (sig *Sign) VerifyHashWithDomain(pub *PublicKey, hashWithDomain []byte) boo
 	}
 	// #nosec
 	return C.blsVerifyHashWithDomain(&sig.v, &pub.v, (*C.uchar)(unsafe.Pointer(&hashWithDomain[0]))) == 1
-}
-
-// VerifyAggregateHashWithDomain -- duplicated for mode > 0
-// hashWithDomains is array of 40 * len(pubVec)
-func (sig *Sign) VerifyAggregateHashWithDomain(pubVec []PublicKey, hashWithDomains []byte) bool {
-	if pubVec == nil {
-		return false
-	}
-	n := len(pubVec)
-	if n == 0 || len(hashWithDomains) != n*40 {
-		return false
-	}
-	return C.blsVerifyAggregatedHashWithDomainCast(&sig.v, &pubVec[0].v, (*C.uchar)(unsafe.Pointer(&hashWithDomains[0])), C.mclSize(n)) == 1
 }
