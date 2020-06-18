@@ -283,6 +283,9 @@ func (sec *SecretKey) SetByCSPRNG() {
 	if err != 0 {
 		panic("err blsSecretKeySetByCSPRNG")
 	}
+	if CastFromSecretKey(sec).IsZero() {
+		panic("err blsSecretKeySetByCSPRNG zero sec")
+	}
 }
 
 // Add --
