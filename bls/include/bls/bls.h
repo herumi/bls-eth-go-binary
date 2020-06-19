@@ -104,7 +104,7 @@ BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
 #define BLS_ETH_MODE_DRAFT_05 1 // 2020/Jan/30
 #define BLS_ETH_MODE_DRAFT_06 2 // 2020/Mar/15
 #define BLS_ETH_MODE_DRAFT_07 3 // 2020/May/13
-#define BLS_ETH_MODE_LATEST 1
+#define BLS_ETH_MODE_LATEST 3
 BLS_DLL_API int blsSetETHmode(int mode);
 
 /*
@@ -164,17 +164,31 @@ BLS_DLL_API int blsSecretKeyIsEqual(const blsSecretKey *lhs, const blsSecretKey 
 BLS_DLL_API int blsPublicKeyIsEqual(const blsPublicKey *lhs, const blsPublicKey *rhs);
 BLS_DLL_API int blsSignatureIsEqual(const blsSignature *lhs, const blsSignature *rhs);
 
+// return 1 if zero else 0
+BLS_DLL_API int blsIdIsZero(const blsId *x);
+BLS_DLL_API int blsSecretKeyIsZero(const blsSecretKey *x);
+BLS_DLL_API int blsPublicKeyIsZero(const blsPublicKey *x);
+BLS_DLL_API int blsSignatureIsZero(const blsSignature *x);
+
 // return 0 if success
-BLS_DLL_API int blsSecretKeyShare(blsSecretKey *sec, const blsSecretKey* msk, mclSize k, const blsId *id);
+// make sec corresponding to id from {msk[0], ..., msk[k-1]}
+BLS_DLL_API int blsSecretKeyShare(blsSecretKey *sec, const blsSecretKey *msk, mclSize k, const blsId *id);
+// make pub corresponding to id from {mpk[0], ..., mpk[k-1]}
 BLS_DLL_API int blsPublicKeyShare(blsPublicKey *pub, const blsPublicKey *mpk, mclSize k, const blsId *id);
 
+// return 0 if success
+// recover sec from {(secVec[i], idVec[i]) for i = 0, ..., n-1}
 BLS_DLL_API int blsSecretKeyRecover(blsSecretKey *sec, const blsSecretKey *secVec, const blsId *idVec, mclSize n);
+// recover pub from {(pubVec[i], idVec[i]) for i = 0, ..., n-1}
 BLS_DLL_API int blsPublicKeyRecover(blsPublicKey *pub, const blsPublicKey *pubVec, const blsId *idVec, mclSize n);
+// recover sig from {(sigVec[i], idVec[i]) for i = 0, ..., n-1}
 BLS_DLL_API int blsSignatureRecover(blsSignature *sig, const blsSignature *sigVec, const blsId *idVec, mclSize n);
 
-// add
+// sec += rhs
 BLS_DLL_API void blsSecretKeyAdd(blsSecretKey *sec, const blsSecretKey *rhs);
+// pub += rhs
 BLS_DLL_API void blsPublicKeyAdd(blsPublicKey *pub, const blsPublicKey *rhs);
+// sig += rhs
 BLS_DLL_API void blsSignatureAdd(blsSignature *sig, const blsSignature *rhs);
 
 /*
