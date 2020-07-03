@@ -321,7 +321,7 @@ func ethVerifyTest(t *testing.T) {
 	}
 }
 
-func ethAggregateTest(t *testing.T) {
+func ethAggregateTestOld(t *testing.T) {
 	msgHexTbl := []string{
 		"b2a0bd8e837fc2a1b28ee5bcf2cddea05f0f341b375e51de9d9ee6d977c2813a5c5583c19d4e7db8d245eebd4e502163076330c988c91493a61b97504d1af85fdc167277a1664d2a43af239f76f176b215e0ee81dc42f1c011dc02d8b0a31e32",
 		"b2deb7c656c86cb18c43dae94b21b107595486438e0b906f3bdb29fa316d0fc3cab1fc04c6ec9879c773849f2564d39317bfa948b4a35fc8509beafd3a2575c25c077ba8bca4df06cb547fe7ca3b107d49794b7132ef3b5493a6ffb2aad2a441",
@@ -467,7 +467,7 @@ func testEthDraft05(t *testing.T) {
 	if err := SetETHmode(EthModeDraft05); err != nil {
 		t.Fatal(err)
 	}
-	ethAggregateTest(t)
+	ethAggregateTestOld(t)
 	ethAggregateVerifyNoCheckTest(t)
 	blsAggregateVerifyNoCheckTest(t)
 }
@@ -482,6 +482,50 @@ func testEthDraft06(t *testing.T) {
 	ethSignOneTest(t, secHex, msgHex, sigHex)
 }
 
+func ethAggregateTest(t *testing.T) {
+	fileName := "tests/aggregate.txt"
+	fp, err := os.Open(fileName)
+	if err != nil {
+		t.Fatalf("can't open %v %v", fileName, err)
+	}
+	defer fp.Close()
+
+	reader := csv.NewReader(fp)
+	reader.Comma = ' '
+	i := 0
+	for {
+		t.Logf("QQQ i=%v\n", i)
+		i++
+		var sigVec []Sign
+		var s []string
+		var err error
+		for {
+			s, err = reader.Read()
+			if err == io.EOF {
+				return
+			}
+			if s[0] == "out" {
+				break
+			}
+			var sig Sign
+			if sig.DeserializeHexStr(s[1]) != nil {
+				t.Fatalf("bad signature")
+			}
+			sigVec = append(sigVec, sig)
+		}
+		var sig Sign
+		if sig.DeserializeHexStr(s[1]) != nil {
+			t.Logf("bad signature %v", s[1])
+			continue
+		}
+		var agg Sign
+		agg.Aggregate(sigVec)
+		if !agg.IsEqual(&sig) {
+			t.Fatalf("bad aggregate")
+		}
+	}
+}
+
 func testEthDraft07(t *testing.T) {
 	if err := SetETHmode(EthModeDraft07); err != nil {
 		t.Fatal(err)
@@ -493,6 +537,7 @@ func testEthDraft07(t *testing.T) {
 	ethSignTest(t)
 	ethFastAggregateVerifyTest(t)
 	ethVerifyTest(t)
+	ethAggregateTest(t)
 }
 
 func Test(t *testing.T) {
