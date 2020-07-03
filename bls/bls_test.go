@@ -245,23 +245,24 @@ func ethSignOneTest(t *testing.T, secHex string, msgHex string, sigHex string) {
 	if sec.DeserializeHexStr(secHex) != nil {
 		t.Fatalf("bad sec")
 	}
+	var sig Sign
+	if sig.DeserializeHexStr(sigHex) != nil {
+		t.Logf("bad sig %v\n", sigHex)
+		return
+	}
 	pub := sec.GetPublicKey()
 	msg, _ := hex.DecodeString(msgHex)
-	sig := sec.SignByte(msg)
+	sig = *sec.SignByte(msg)
 	if !sig.VerifyByte(pub, msg) {
 		t.Fatalf("bad verify %v %v", secHex, msgHex)
 	}
-	if sig.SerializeToHexStr() != sigHex {
-		t.Fatalf("bad sign %v %v", secHex, msgHex)
+	s := sig.SerializeToHexStr()
+	if s != sigHex {
+		t.Fatalf("bad sign\nL=%v\nR=%v\nsec=%v\nmsg=%v", s, sigHex, secHex, msgHex)
 	}
 }
 
 func ethSignTest(t *testing.T) {
-	secHex := "47b8192d77bf871b62e87859d653922725724a5c031afeabc60bcef5ff665138"
-	msgHex := "0000000000000000000000000000000000000000000000000000000000000000"
-	sigHex := "b2deb7c656c86cb18c43dae94b21b107595486438e0b906f3bdb29fa316d0fc3cab1fc04c6ec9879c773849f2564d39317bfa948b4a35fc8509beafd3a2575c25c077ba8bca4df06cb547fe7ca3b107d49794b7132ef3b5493a6ffb2aad2a441"
-
-	ethSignOneTest(t, secHex, msgHex, sigHex)
 	fileName := "tests/sign.txt"
 	fp, err := os.Open(fileName)
 	if err != nil {
@@ -428,9 +429,7 @@ func testEthDraft05(t *testing.T) {
 		t.Fatal(err)
 	}
 	ethAggregateTest(t)
-	ethSignTest(t)
 	ethAggregateVerifyNoCheckTest(t)
-	ethFastAggregateVerifyTest(t)
 	blsAggregateVerifyNoCheckTest(t)
 }
 
@@ -452,6 +451,8 @@ func testEthDraft07(t *testing.T) {
 	msgHex := "61736466"
 	sigHex := "b45a264e0d6f8614c4640ea97bae13effd3c74c4e200e3b1596d6830debc952602a7d210eca122dc4f596fa01d7f6299106933abd29477606f64588595e18349afe22ecf2aeeeb63753e88a42ef85b24140847e05620a28422f8c30f1d33b9aa"
 	ethSignOneTest(t, secHex, msgHex, sigHex)
+	ethSignTest(t)
+	ethFastAggregateVerifyTest(t)
 }
 
 func Test(t *testing.T) {
