@@ -50,6 +50,9 @@ func Init(curve int) error {
 	if err != 0 {
 		return fmt.Errorf("ERR Init curve=%d", curve)
 	}
+	if err := SetETHmode(EthModeDraft07); err != nil {
+		return fmt.Errorf("ERR SetETHmode")
+	}
 	return nil
 }
 
