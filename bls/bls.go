@@ -9,6 +9,7 @@ package bls
 #cgo android,amd64 LDFLAGS:-L${SRCDIR}/lib/android/x86_64
 #cgo linux,amd64 LDFLAGS:-L${SRCDIR}/lib/linux/amd64
 #cgo linux,arm64 LDFLAGS:-L${SRCDIR}/lib/linux/arm64
+#cgo linux,arm LDFLAGS:-L${SRCDIR}/lib/android/armeabi-v7a
 #cgo darwin,amd64 LDFLAGS:-L${SRCDIR}/lib/darwin/amd64
 #cgo darwin,arm64 LDFLAGS:-L${SRCDIR}/lib/darwin/arm64
 #cgo windows,amd64 LDFLAGS:-L${SRCDIR}/lib/windows/amd64
