@@ -526,6 +526,58 @@ func ethAggregateTest(t *testing.T) {
 	}
 }
 
+func ethAggregateVerifyTest(t *testing.T) {
+	fileName := "tests/aggregate_verify.txt"
+	fp, err := os.Open(fileName)
+	if err != nil {
+		t.Fatalf("can't open %v %v", fileName, err)
+	}
+	defer fp.Close()
+
+	reader := csv.NewReader(fp)
+	reader.Comma = ' '
+	i := 0
+	for {
+		t.Logf("i=%v\n", i)
+		i++
+		var pubVec []PublicKey
+		var s []string
+		var err error
+		for {
+			s, err = reader.Read()
+			if err == io.EOF {
+				return
+			}
+			if s[0] == "msg" {
+				break
+			}
+			var pub PublicKey
+			if pub.DeserializeHexStr(s[1]) != nil {
+				t.Fatalf("bad signature")
+			}
+			pubVec = append(pubVec, pub)
+		}
+		msg, _ := hex.DecodeString(s[1])
+		for j := 1; j < len(pubVec); j++ {
+			s, _ := reader.Read()
+			b, _ := hex.DecodeString(s[1])
+			msg = append(msg, b...)
+		}
+		sigHex, _ := reader.Read()
+		outHex, _ := reader.Read()
+		var sig Sign
+		if sig.DeserializeHexStr(sigHex[1]) != nil {
+			t.Logf("bad signature %v", sigHex[1])
+			continue
+		}
+		out := outHex[1] == "true"
+		b := sig.AggregateVerify(pubVec, msg)
+		if b != out {
+			t.Fatalf("bad AggregateVerify")
+		}
+	}
+}
+
 func testEthDraft07(t *testing.T) {
 	if err := SetETHmode(EthModeDraft07); err != nil {
 		t.Fatal(err)
@@ -538,6 +590,7 @@ func testEthDraft07(t *testing.T) {
 	ethFastAggregateVerifyTest(t)
 	ethVerifyTest(t)
 	ethAggregateTest(t)
+	ethAggregateVerifyTest(t)
 }
 
 func Test(t *testing.T) {
