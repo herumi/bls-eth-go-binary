@@ -262,6 +262,24 @@ func ethSignOneTest(t *testing.T, secHex string, msgHex string, sigHex string) {
 	}
 }
 
+func ethVerifyOneTest(t *testing.T, pubHex string, msgHex string, sigHex string, outStr string) {
+	var pub PublicKey
+	if pub.DeserializeHexStr(pubHex) != nil {
+		t.Fatalf("bad pub %v", pubHex)
+	}
+	var sig Sign
+	if sig.DeserializeHexStr(sigHex) != nil {
+		t.Logf("bad sig %v\n", sigHex)
+		return
+	}
+	msg, _ := hex.DecodeString(msgHex)
+	b := sig.VerifyByte(&pub, msg)
+	expect := outStr == "true"
+	if b != expect {
+		t.Fatalf("bad verify\nL=%v\nR=%v\npub=%v\nmsg=%v\nsig=%v\n", b, expect, pubHex, msgHex, sigHex)
+	}
+}
+
 func ethSignTest(t *testing.T) {
 	fileName := "tests/sign.txt"
 	fp, err := os.Open(fileName)
@@ -279,6 +297,27 @@ func ethSignTest(t *testing.T) {
 		msgHex, _ := reader.Read()
 		sigHex, _ := reader.Read()
 		ethSignOneTest(t, secHex[1], msgHex[1], sigHex[1])
+	}
+}
+
+func ethVerifyTest(t *testing.T) {
+	fileName := "tests/verify.txt"
+	fp, err := os.Open(fileName)
+	if err != nil {
+		t.Fatalf("can't open %v %v", fileName, err)
+	}
+	defer fp.Close()
+	reader := csv.NewReader(fp)
+	reader.Comma = ' '
+	for {
+		pubHex, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		msgHex, _ := reader.Read()
+		sigHex, _ := reader.Read()
+		outStr, _ := reader.Read()
+		ethVerifyOneTest(t, pubHex[1], msgHex[1], sigHex[1], outStr[1])
 	}
 }
 
@@ -453,6 +492,7 @@ func testEthDraft07(t *testing.T) {
 	ethSignOneTest(t, secHex, msgHex, sigHex)
 	ethSignTest(t)
 	ethFastAggregateVerifyTest(t)
+	ethVerifyTest(t)
 }
 
 func Test(t *testing.T) {
