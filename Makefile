@@ -30,7 +30,16 @@ ifeq ($(OS),Linux)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
 endif
+
+ifeq ($(CPU),mips)
+	$(eval _ARCH=mips)
+ifeq ($(OS),Linux)
+	$(eval _OS=linux)
+endif
+endif
 	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
+
+	$(info LIB_DIR is $(LIB_DIR))
 	-mkdir -p $(LIB_DIR)
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
 	clang++-10 -target $$(/root/source/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-g++ -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS)
@@ -95,7 +104,8 @@ each_ios: $(BASE_LL)
 	ranlib $(IOS_OUTDIR)/$(IOS_LIB)
 
 mips:
-	sh xcomp_mips.sh -buildroot $(BUILD_ROOT) -include "../cybozulib/include -I ../mcl/include -I $(BUILD_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2"
+	make all OS=Linux CPU=mips
+	#sh xcomp_mips.sh -buildroot $(BUILD_ROOT) -include "../cybozulib/include -I ../mcl/include -I $(BUILD_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2"
 
 clean:
 	cd ../mcl	&& make clean
