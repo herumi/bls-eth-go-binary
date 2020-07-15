@@ -4,6 +4,10 @@ ETH_CFLAGS=-DBLS_ETH -DBLS_SWAP_G
 MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=8 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
 OBJ_DIR=obj
 
+# Location of your cross compiler toolchain
+# More info: https://docs.onion.io/omega2-docs/cross-compiling.html#cross-compiling
+BUILD_ROOT=/root/source
+
 all: ../mcl/src/base64.ll
 ifeq ($(CPU),x86-64)
 	$(eval _ARCH=amd64)
@@ -85,6 +89,14 @@ each_ios: $(BASE_LL)
 	$(IOS_CLANG) $(IOS_COMMON) $(IOS_CFLAGS) -c ../bls/src/bls_c$(CURVE_BIT).cpp -o $(IOS_OUTDIR)/bls_c$(CURVE_BIT).o
 	ar cru $(IOS_OUTDIR)/$(IOS_LIB) $(IOS_OUTDIR)/fp.o $(IOS_OUTDIR)/base$(BIT).o $(IOS_OUTDIR)/bls_c$(CURVE_BIT).o
 	ranlib $(IOS_OUTDIR)/$(IOS_LIB)
+
+mips:
+	sh xcomp_mips.sh -buildroot $(BUILD_ROOT) -include "../cybozulib/include -I ../mcl/include -I $(BUILD_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2"
+
+clean:
+	cd ../mcl	&& make clean
+	cd ../bls-eth-go-binary
+	cd ../bls && make clean
 
 update:
 	cp ../bls/include/bls/bls.h bls/include/bls/.
