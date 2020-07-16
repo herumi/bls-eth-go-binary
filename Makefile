@@ -87,31 +87,38 @@ each_ios: $(BASE_LL)
 	ranlib $(IOS_OUTDIR)/$(IOS_LIB)
 
 # mips
-# TODO: define all mips specific vars here similar to how ios and android is done
+
 MIPS_TOOLCHAIN_ROOT=/root/source
-MIPS_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
+MIPS_LIB_DIR=bls/lib/linux/mips
+MIPS_TOOLCHAIN_CXX=$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-g++
+MIPS_TOOLCHAIN_CFLAGS=-Os -pipe -mno-branch-likely -mips32r2 -mtune=24kc -fno-caller-saves -fno-plt -fhonour-copts -Wno-error=unused-but-set-variable -Wno-error=unused-result -msoft-float -mips16 -minterlink-mips16 -Wformat -Werror=format-security -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro 
+MIPS_HERUMI_CFLAGS=-std=c++03 -O3 -fPIC -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 $(ETH_CFLAGS) $(CFLAGS_USER)
+MIPS_TOOLCHAIN_INCLUDES=-I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/usr/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/target-mipsel_24kc_musl/usr/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/target-mipsel_24kc_musl/include -I$(MIPS_TOOLCHAIN_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2 
+MIPS_HERUMI_INCLUDES=-I../cybozulib/include -I../bls/include -I../mcl/include
+MIPS_TARGET_TRIPLE=$$($(MIPS_TOOLCHAIN_CXX) -dumpmachine)
 
-mips:
-	$(eval LIB_DIR=bls/lib/linux/mips)
-	$(eval MIPS_CFLAGS=$(MIPS_CFLAGS) -fPIC)
-	-mkdir -p $(LIB_DIR)
-	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_CFLAGS) $(CFLAGS)
-	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_CFLAGS) -mfloat-abi=soft
-	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_CFLAGS) $(CFLAGS)
-	$(AR) cru $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+mips_all: clean mips mips_sample
 
-mips_sample: mips
-	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
+mips: ../mcl/src/base32.ll
+	-mkdir -p $(MIPS_LIB_DIR)
+	$(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
+	$(CXX) -target $(MIPS_TARGET_TRIPLE) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_HERUMI_INCLUDES) $(MIPS_HERUMI_CFLAGS) -mfloat-abi=soft
+	$(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
+	$(AR) cru $(MIPS_LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+
+mips_sample:
+	env CGO_LDFLAGS="-L$(PWD)/$(MIPS_LIB_DIR)" \
 	CGO_LDLIBS="-lbls384_256" \
-	CGO_CXXFLAGS="$(MIPS_CFLAGS) $(CFLAGS)" \
+	CGO_CXXFLAGS="$(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)" \
  	GOOS=linux \
  	GOARCH=mipsle \
  	GOMIPS=softfloat \
  	CGO_ENABLED=1 \
- 	CXX_FOR_TARGET="$(CXX)" \
+ 	CXX_FOR_TARGET="$(MIPS_TOOLCHAIN_CXX)" \
  	go build examples/sample.go
 
 clean:
+	rm -f $(OBJ_DIR)/*
 	cd ../mcl && make clean
 
 
