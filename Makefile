@@ -93,7 +93,7 @@ MIPS_LIB_DIR=bls/lib/linux/mips
 MIPS_TOOLCHAIN_CXX=$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-g++
 MIPS_TOOLCHAIN_CC=$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-gcc
 MIPS_TOOLCHAIN_AR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-ar
-MIPS_TOOLCHAIN_CFLAGS=-Os -pipe -mno-branch-likely -mips32r2 -mtune=24kc -fno-caller-saves -fno-plt -fhonour-copts -Wno-error=unused-but-set-variable -Wno-error=unused-result -msoft-float -mips16 -minterlink-mips16 -Wformat -Werror=format-security -fstack-protector -D_FORTIFY_SOURCE=1 -Wl,-z,now -Wl,-z,relro 
+MIPS_TOOLCHAIN_CFLAGS=-Os -pipe -mno-branch-likely -mips32r2 -mtune=24kc -fno-caller-saves -fno-plt -fhonour-copts -Wno-error=unused-but-set-variable -Wno-error=unused-result -msoft-float -mips16 -minterlink-mips16 -Wformat -Werror=format-security -fstack-protector -Wl,-z,now -Wl,-z,relro 
 MIPS_HERUMI_CFLAGS=-std=c++03 -O3 -fPIC -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 $(ETH_CFLAGS) $(CFLAGS_USER)
 MIPS_TOOLCHAIN_INCLUDES=-I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/usr/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/target-mipsel_24kc_musl/usr/include -I$(MIPS_TOOLCHAIN_ROOT)/staging_dir/target-mipsel_24kc_musl/include -I$(MIPS_TOOLCHAIN_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2 
 MIPS_HERUMI_INCLUDES=-I../cybozulib/include -I../bls/include -I../mcl/include
@@ -102,16 +102,15 @@ MIPS_TARGET_TRIPLE=$$($(MIPS_TOOLCHAIN_CXX) -dumpmachine)
 mips_all: clean mips mips_sample
 
 mips: ../mcl/src/base32.ll
-	$(eval STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir)
 	-mkdir -p $(MIPS_LIB_DIR)
-	$(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
-	$(CXX) -target $(MIPS_TARGET_TRIPLE) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_HERUMI_INCLUDES) $(MIPS_HERUMI_CFLAGS) -mfloat-abi=soft
-	$(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
+	STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir $(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
+	$(CXX) -target $(MIPS_TARGET_TRIPLE) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_HERUMI_CFLAGS) -mfloat-abi=soft
+	STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir $(MIPS_TOOLCHAIN_CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_HERUMI_INCLUDES) $(MIPS_TOOLCHAIN_INCLUDES) $(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)
 	$(MIPS_TOOLCHAIN_AR) cru $(MIPS_LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
 
 mips_sample:
-	$(eval CC=$(MIPS_TOOLCHAIN_CC))
 	$(eval STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir)
+	$(eval CC=$(MIPS_TOOLCHAIN_CC))
 	env CGO_LDFLAGS="-L$(PWD)/$(MIPS_LIB_DIR)" \
 	CGO_LDLIBS="-lbls384_256" \
 	CGO_CXXFLAGS="$(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)" \
