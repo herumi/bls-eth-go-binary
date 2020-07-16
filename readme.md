@@ -73,6 +73,12 @@ make android
 make ios
 ```
 
+## Cross Compile for MIPS
+
+```
+make CXX=clang++ mips_all
+```
+
 # How to use the static library from C
 ```
 #define BLS_ETH
