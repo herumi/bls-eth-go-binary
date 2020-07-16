@@ -111,15 +111,17 @@ mips: ../mcl/src/base32.ll
 
 mips_sample:
 	$(eval CC=$(MIPS_TOOLCHAIN_CC))
+	$(eval STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir)
 	env CGO_LDFLAGS="-L$(PWD)/$(MIPS_LIB_DIR)" \
 	CGO_LDLIBS="-lbls384_256" \
 	CGO_CXXFLAGS="$(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)" \
- 	GOOS=linux \
- 	GOARCH=mipsle \
- 	GOMIPS=softfloat \
- 	CGO_ENABLED=1 \
- 	CXX_FOR_TARGET="$(MIPS_TOOLCHAIN_CXX)" \
- 	go build examples/sample.go
+	GOOS=linux \
+	GOARCH=mipsle \
+	GOMIPS=softfloat \
+	CGO_ENABLED=1 \
+	CXX_FOR_TARGET="$(MIPS_TOOLCHAIN_CXX)" \
+	CC_FOR_TARGET="$(MIPS_TOOLCHAIN_CC)" \
+	go build examples/sample.go
 
 clean:
 	rm -f $(OBJ_DIR)/*
