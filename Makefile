@@ -98,7 +98,7 @@ mips:
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_CFLAGS) $(CFLAGS)
 	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_CFLAGS) -mfloat-abi=soft
 	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_CFLAGS) $(CFLAGS)
-	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+	$(AR) cru $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
 
 mips_sample: mips
 	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
@@ -113,8 +113,7 @@ mips_sample: mips
 
 clean:
 	cd ../mcl && make clean
-	cd ../bls-eth-go-binary
-	rm -f bls/lib/linux/mips/libbls384_256.a
+
 
 update:
 	cp ../bls/include/bls/bls.h bls/include/bls/.
