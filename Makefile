@@ -55,7 +55,7 @@ BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
 #TODO: rever this back to herumi upstream
 ../mcl/src/base32.ll:
-	$(MAKE) -C ../mcl src/base32.ll
+	$(MAKE) -C ../mcl src/base32.ll BIT=32
 
 
 ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
