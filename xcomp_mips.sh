@@ -128,8 +128,7 @@ fi
 
 # first run make clean
 make clean
-# run the make command
-make ../mcl/src/base32.ll 
+make ../mcl/src/base32.ll CXX=clang++-10
 make mips_sample \
 	CC="$TOOLCHAIN_CC" \
 	CXX="$TOOLCHAIN_CXX" \
