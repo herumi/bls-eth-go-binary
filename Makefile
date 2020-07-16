@@ -1,15 +1,10 @@
 include ../mcl/common.mk
 ETH_CFLAGS=-DBLS_ETH -DBLS_SWAP_G
 
-# TODO: rever this back to herumi upstream
-MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER) 
+MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=8 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
 OBJ_DIR=obj
 
-# Location of your cross compiler toolchain
-# More info: https://docs.onion.io/omega2-docs/cross-compiling.html#cross-compiling
-BUILD_ROOT=/root/source
-
-all: ../mcl/src/base32.ll
+all: ../mcl/src/base64.ll
 ifeq ($(CPU),x86-64)
 	$(eval _ARCH=amd64)
 ifeq ($(OS),mingw64)
@@ -31,32 +26,20 @@ ifeq ($(OS),Linux)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
 endif
-
-ifeq ($(CPU),mips)
-	$(eval _ARCH=mips)
-ifeq ($(OS),Linux)
-	$(eval _OS=linux)
-	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
-endif
-endif
-
-# TODO: revert this back to herumi upstream
 	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
 	-mkdir -p $(LIB_DIR)
-	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS) $(CFLAGS)
-	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS) -mfloat-abi=soft 
-	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS) $(CFLAGS)
-	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
+	$(CXX) -c -o $(OBJ_DIR)/base64.o ../mcl/src/base64.ll $(MIN_CFLAGS)
+	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
+	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base64.o
 
 BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
 ../mcl/src/base64.ll:
 	$(MAKE) -C ../mcl src/base64.ll
 
-#TODO: rever this back to herumi upstream
 ../mcl/src/base32.ll:
 	$(MAKE) -C ../mcl src/base32.ll BIT=32
-
 
 ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
 android: $(BASE_LL)
@@ -105,21 +88,22 @@ each_ios: $(BASE_LL)
 
 # mips
 # TODO: define all mips specific vars here similar to how ios and android is done
-
+MIPS_TOOLCHAIN_ROOT=/root/source
+MIPS_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
 
 mips:
 	$(eval LIB_DIR=bls/lib/linux/mips)
-	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+	$(eval MIPS_CFLAGS=$(MIPS_CFLAGS) -fPIC)
 	-mkdir -p $(LIB_DIR)
-	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS) $(CFLAGS)
-	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS) -mfloat-abi=soft
-	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS) $(CFLAGS)
+	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIPS_CFLAGS) $(CFLAGS)
+	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIPS_CFLAGS) -mfloat-abi=soft
+	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIPS_CFLAGS) $(CFLAGS)
 	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
 
 mips_sample: mips
 	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
 	CGO_LDLIBS="-lbls384_256" \
-	CGO_CXXFLAGS="$(MIN_CFLAGS) $(CFLAGS)" \
+	CGO_CXXFLAGS="$(MIPS_CFLAGS) $(CFLAGS)" \
  	GOOS=linux \
  	GOARCH=mipsle \
  	GOMIPS=softfloat \
