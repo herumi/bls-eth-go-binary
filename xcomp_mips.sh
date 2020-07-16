@@ -126,10 +126,8 @@ if [ $bDebug -eq 1 ]; then
 	echo ""
 fi
 
-
 # first run make clean
 make clean
-
 # run the make command
 make \
 	CC="$TOOLCHAIN_CC" \
@@ -137,4 +135,5 @@ make \
 	LD="$TOOLCHAIN_LD" \
 	CFLAGS="$TOOLCHAIN_CFLAGS" \
 	LDFLAGS="$TOOLCHAIN_LDFLAGS" \
-	LIB="$USER_LIBS"
+	LIB="$USER_LIBS" \
+	AR="$TOOLCHAIN_AR"

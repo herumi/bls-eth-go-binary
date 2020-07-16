@@ -1,7 +1,7 @@
 include ../mcl/common.mk
 ETH_CFLAGS=-DBLS_ETH -DBLS_SWAP_G
 
-MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
+MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=4 -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER) 
 OBJ_DIR=obj
 
 # Location of your cross compiler toolchain
@@ -30,21 +30,21 @@ ifeq ($(OS),Linux)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
 endif
-
-ifeq ($(CPU),mips)
-	$(eval _ARCH=mips)
-ifeq ($(OS),Linux)
-	$(eval _OS=linux)
-endif
-endif
-	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
-
-	$(info LIB_DIR is $(LIB_DIR))
+	$(eval LIB_DIR=bls/lib/$(_OS)/mips)
 	-mkdir -p $(LIB_DIR)
-	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
-	clang++-10 -target $$(/root/source/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-g++ -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS)
-	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
-	/root/source/staging_dir/toolchain-mipsel_24kc_gcc-7.3.0_musl/bin/mipsel-openwrt-linux-musl-ar r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS) $(CFLAGS)
+	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS) -mfloat-abi=soft 
+	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS) $(CFLAGS)
+	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
+	CGO_LDLIBS="-lbls384_256" \
+	CGO_CXXFLAGS="$(MIN_CFLAGS) $(CFLAGS)" \
+	GOOS=linux \
+	GOARCH=mipsle \
+	GOMIPS=softfloat \
+	CGO_ENABLED=1 \
+	CXX_FOR_TARGET="$(CXX)" \
+	go build examples/sample.go	
 
 BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
@@ -53,8 +53,8 @@ BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
 ../mcl/src/base32.ll:
 	cd ../mcl \
-	&& g++ -o src/gen src/gen.cpp -g3 -Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith -m64 -I include -I test -fomit-frame-pointer -DNDEBUG -fno-stack-protector -Ofast  -DMCL_DONT_USE_OPENSSL -fPIC -DMCL_USE_LLVM=1 \
-	&& src/gen -u 32 -f src/func.list > src/base32.ll
+	&& clang++-10 -o src/gen src/gen.cpp -g3 -Wall -Wextra -Wformat=2 -Wcast-qual -Wcast-align -Wwrite-strings -Wfloat-equal -Wpointer-arith -I include -I test -fomit-frame-pointer -DNDEBUG -fno-stack-protector -Ofast  -DMCL_DONT_USE_OPENSSL -fPIC -DMCL_USE_LLVM=1 \
+	&& touch src/func.list && src/gen -u 32 -f src/func.list > src/base32.ll
 
 
 
@@ -103,14 +103,14 @@ each_ios: $(BASE_LL)
 	ar cru $(IOS_OUTDIR)/$(IOS_LIB) $(IOS_OUTDIR)/fp.o $(IOS_OUTDIR)/base$(BIT).o $(IOS_OUTDIR)/bls_c$(CURVE_BIT).o
 	ranlib $(IOS_OUTDIR)/$(IOS_LIB)
 
+# mips
+
 mips:
-	make all OS=Linux CPU=mips
-	#sh xcomp_mips.sh -buildroot $(BUILD_ROOT) -include "../cybozulib/include -I ../mcl/include -I $(BUILD_ROOT)/build_dir/target-mipsel_24kc_musl/gmp-6.1.2"
 
 clean:
-	cd ../mcl	&& make clean
+	cd ../mcl && make clean
 	cd ../bls-eth-go-binary
-	cd ../bls && make clean
+	rm -f bls/lib/linux/mips/libbls384_256.a
 
 update:
 	cp ../bls/include/bls/bls.h bls/include/bls/.
