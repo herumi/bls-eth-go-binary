@@ -30,21 +30,21 @@ ifeq ($(OS),Linux)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
 endif
-	$(eval LIB_DIR=bls/lib/$(_OS)/mips)
+
+ifeq ($(CPU),mips)
+	$(eval _ARCH=mips)
+ifeq ($(OS),Linux)
+	$(eval _OS=linux)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+endif
+endif
+
+	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
 	-mkdir -p $(LIB_DIR)
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS) $(CFLAGS)
 	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS) -mfloat-abi=soft 
 	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS) $(CFLAGS)
 	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
-	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
-	CGO_LDLIBS="-lbls384_256" \
-	CGO_CXXFLAGS="$(MIN_CFLAGS) $(CFLAGS)" \
-	GOOS=linux \
-	GOARCH=mipsle \
-	GOMIPS=softfloat \
-	CGO_ENABLED=1 \
-	CXX_FOR_TARGET="$(CXX)" \
-	go build examples/sample.go	
 
 BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
@@ -106,6 +106,24 @@ each_ios: $(BASE_LL)
 # mips
 
 mips:
+	$(eval LIB_DIR=bls/lib/linux/mips)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+	-mkdir -p $(LIB_DIR)
+	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS) $(CFLAGS)
+	clang++-10 -target $$($(CXX) -dumpmachine) -c -o $(OBJ_DIR)/base32.o ../mcl/src/base32.ll $(MIN_CFLAGS) -mfloat-abi=soft
+	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS) $(CFLAGS)
+	$(AR) r $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base32.o
+
+mips_sample: mips
+	env CGO_LDFLAGS="-L$(PWD)/$(LIB_DIR)" \
+	CGO_LDLIBS="-lbls384_256" \
+	CGO_CXXFLAGS="$(MIN_CFLAGS) $(CFLAGS)" \
+ 	GOOS=linux \
+ 	GOARCH=mipsle \
+ 	GOMIPS=softfloat \
+ 	CGO_ENABLED=1 \
+ 	CXX_FOR_TARGET="$(CXX)" \
+ 	go build examples/sample.go
 
 clean:
 	cd ../mcl && make clean
