@@ -110,7 +110,7 @@ mips: ../mcl/src/base32.ll
 
 mips_sample:
 	$(eval STAGING_DIR=$(MIPS_TOOLCHAIN_ROOT)/staging_dir)
-	$(eval CC=$(MIPS_TOOLCHAIN_CC))
+	$(eval export CC=$(MIPS_TOOLCHAIN_CC))
 	env CGO_LDFLAGS="-L$(PWD)/$(MIPS_LIB_DIR)" \
 	CGO_LDLIBS="-lbls384_256" \
 	CGO_CXXFLAGS="$(MIPS_HERUMI_CFLAGS) $(MIPS_TOOLCHAIN_CFLAGS)" \
