@@ -73,14 +73,8 @@ make android
 make ios
 ```
 
-# How to use the static library from C
-```
-#define BLS_ETH
-#include <mcl/bn_c384_256.h>
-#include <bls/bls.h>
-```
-
-## How to build `bls/lib/android/armeabi-v7a/lib_c384_256.a` for armeabi-v7a
+## How to cross-compile for armeabi-v7a
+Check `llc --version` shows to support the target armv7a.
 
 ```
 make ../mcl/src/base32.ll
@@ -91,12 +85,35 @@ env CXX=clang++ BIT=32 ARCH=arm _OS=android _ARCH=armeabi-v7a make MCL_USE_GMP=0
 ### How to build sample.go for armeabi-v7a
 
 ```
-env CC=arm-linux-gnueabi-gcc CXX=arm-linux-gnueabi-g++ CGO_ENABLED=1 GOOS=linux GOARM=7 GOARCH=arm go build examples/sample.go
+env CC=arm-linux-gnueabi-gcc CGO_ENABLED=1 GOOS=linux GOARM=7 GOARCH=arm go build examples/sample.go
 env QEMU_LD_PREFIX=/usr/arm-linux-gnueabi qemu-arm ./sample
 ```
 
-## Author
+## How to cross-compile for mipsel
+Check `llc --version` shows to support the target mips.
+
+```
+make ../mcl/src/base32.ll
+env CXX=clang++ BIT=32 ARCH=mipsel _OS=linux _ARCH=mipsle make MCL_USE_GMP=0 UNIT=4 CFLAGS_USER="-target mipsel-linux -fPIC"
+```
+
+* Remark : clang++ must support `mipsel-linux`.
+### How to build sample.go for mipsel
+
+```
+env CC=mipsel-linux-gnu-gcc CGO_ENABLED=1 GOOS=linux GOARCH=mipsle GOMIPS=softfloat go build examples/sample.go
+env QEMU_LD_PREFIX=/usr/mipsel-linux-gnu qemu-mipsel ./sample
+```
+
+# How to use the static library from C
+```
+#define BLS_ETH
+#include <mcl/bn_c384_256.h>
+#include <bls/bls.h>
+```
+
+# Author
 MITSUNARI Shigeo(herumi@nifty.com)
 
-## Sponsors welcome
+# Sponsors welcome
 [GitHub Sponsor](https://github.com/sponsors/herumi)
