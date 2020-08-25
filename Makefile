@@ -20,6 +20,10 @@ ifeq ($(OS),mac)
 	$(eval _OS=darwin)
 	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
 endif
+ifeq ($(OS),openbsd)
+	$(eval _OS=openbsd)
+	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+endif
 endif
 ifeq ($(CPU),aarch64)
 	$(eval _ARCH=arm64)
