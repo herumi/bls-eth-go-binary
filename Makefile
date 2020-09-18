@@ -3,37 +3,52 @@ ETH_CFLAGS=-DBLS_ETH -DBLS_SWAP_G
 
 UNIT?=8
 
-MIN_CFLAGS=-std=c++03 -O3 -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=$(UNIT) -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
+MIN_CFLAGS=-std=c++03 -O3 -fno-exceptions -fno-rtti -fno-threadsafe-statics -fno-stack-protector -DNDEBUG -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_SIZEOF_UNIT=$(UNIT) -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -D_FORTIFY_SOURCE=0 -I../bls/include -I../mcl/include $(ETH_CFLAGS) $(CFLAGS_USER)
 OBJ_DIR=obj
+OBJS=$(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base$(BIT).o
 
-all: ../mcl/src/base$(BIT).ll
 ifeq ($(CPU),x86-64)
-	$(eval _ARCH=amd64)
-ifeq ($(OS),mingw64)
-	$(eval _OS=windows)
+  _ARCH=amd64
+  MIN_CFLAGS+=-DMCL_STATIC_CODE -DMCL_DONT_USE_XBYAK
+  MCL_STATIC_CODE=1
+  OBJS+=../mcl/obj/static_code.o
+  ifeq ($(OS),mingw64)
+    _OS=windows
+  endif
+  ifeq ($(OS),Linux)
+    _OS=linux
+    MIN_CFLAGS+=-fPIC
+  endif
+  ifeq ($(OS),mac)
+    _OS=darwin
+    MIN_CFLAGS+=-fPIC
+  endif
 endif
-ifeq ($(OS),Linux)
-	$(eval _OS=linux)
-	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
-endif
-ifeq ($(OS),mac)
-	$(eval _OS=darwin)
-	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
-endif
-endif
+
 ifeq ($(CPU),aarch64)
-	$(eval _ARCH=arm64)
+  _ARCH=arm64
 ifeq ($(OS),Linux)
-	$(eval _OS=linux)
-	$(eval MIN_CFLAGS=$(MIN_CFLAGS) -fPIC)
+  _OS=linux
+  MIN_CFLAGS+=-fPIC
 endif
 endif
-	$(eval LIB_DIR=bls/lib/$(_OS)/$(_ARCH))
+
+LIB_DIR=bls/lib/$(_OS)/$(_ARCH)
+
+all: $(LIB_DIR)/libbls384_256.a
+
+$(LIB_DIR)/libbls384_256.a: $(OBJS)
 	-mkdir -p $(LIB_DIR)
+	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJS)
+
+$(OBJ_DIR)/fp.o:
 	$(CXX) -c -o $(OBJ_DIR)/fp.o ../mcl/src/fp.cpp $(MIN_CFLAGS)
+$(OBJ_DIR)/base$(BIT).o: ../mcl/src/base$(BIT).ll
 	$(CXX) -c -o $(OBJ_DIR)/base$(BIT).o ../mcl/src/base$(BIT).ll $(MIN_CFLAGS)
+$(OBJ_DIR)/bls_c384_256.o:
 	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o ../bls/src/bls_c384_256.cpp $(MIN_CFLAGS)
-	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base$(BIT).o
+../mcl/obj/static_code.o:
+	$(MAKE) -C ../mcl obj/static_code.o
 
 BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
@@ -42,6 +57,7 @@ BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 
 ../mcl/src/base32.ll:
 	$(MAKE) -C ../mcl src/base32.ll BIT=32
+
 
 ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
 android: $(BASE_LL)
@@ -101,4 +117,7 @@ update_patch:
 	-diff -up ../bls/ffi/go/bls/mcl.go bls/mcl.go > patch/mcl.patch
 	-diff -up ../bls/ffi/go/bls/bls.go bls/bls.go > patch/bls.patch
 
-.PHONY: android ios each_ios
+clean:
+	$(RM) -rf obj/*.o
+
+.PHONY: android ios each_ios clean
