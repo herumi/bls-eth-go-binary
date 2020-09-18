@@ -59,6 +59,7 @@ git clone https://github.com/herumi/bls
 git clone https://github.com/herumi/bls-eth-go-binary
 cd bls-eth-go-binary
 make CXX=clang++
+go test ./bls -bench "Pairing|Sign|Verify"
 ```
 
 clang generates better binary than gcc.
