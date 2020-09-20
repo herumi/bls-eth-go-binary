@@ -23,6 +23,10 @@ ifeq ($(CPU),x86-64)
     _OS=darwin
     MIN_CFLAGS+=-fPIC
   endif
+  ifeq ($(OS),openbsd)
+    _OS=openbsd
+    MIN_CFLAGS+=-fPIC
+  endif
 endif
 
 ifeq ($(CPU),aarch64)
