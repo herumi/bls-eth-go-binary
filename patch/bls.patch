@@ -1,6 +1,6 @@
 --- ../bls/ffi/go/bls/bls.go	2020-07-06 18:12:45.405585450 +0900
-+++ bls/bls.go	2020-07-19 11:35:47.972279976 +0900
-@@ -1,17 +1,21 @@
++++ bls/bls.go	2020-09-23 16:18:49.781452377 +0900
+@@ -1,17 +1,23 @@
  package bls
  
  /*
@@ -21,17 +21,19 @@
 +#cgo android,amd64 LDFLAGS:-L${SRCDIR}/lib/android/x86_64
 +#cgo linux,amd64 LDFLAGS:-L${SRCDIR}/lib/linux/amd64
 +#cgo linux,arm64 LDFLAGS:-L${SRCDIR}/lib/linux/arm64
++#cgo linux,mipsle LDFLAGS:-L${SRCDIR}/lib/linux/mipsel
 +#cgo linux,arm LDFLAGS:-L${SRCDIR}/lib/android/armeabi-v7a
 +#cgo darwin,amd64 LDFLAGS:-L${SRCDIR}/lib/darwin/amd64
 +#cgo darwin,arm64 LDFLAGS:-L${SRCDIR}/lib/darwin/arm64
 +#cgo windows,amd64 LDFLAGS:-L${SRCDIR}/lib/windows/amd64
++#cgo openbsd,amd64 LDFLAGS:-L${SRCDIR}/lib/openbsd/amd64
  typedef unsigned int (*ReadRandFunc)(void *, void *, unsigned int);
  int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 +#include <mcl/bn_c384_256.h>
  #include <bls/bls.h>
  */
  import "C"
-@@ -23,6 +27,12 @@ import (
+@@ -23,6 +29,12 @@ import (
  	"unsafe"
  )
  
@@ -44,7 +46,7 @@
  func hex2byte(s string) ([]byte, error) {
  	if (len(s) & 1) == 1 {
  		return nil, fmt.Errorf("odd length")
-@@ -34,10 +44,16 @@ func hex2byte(s string) ([]byte, error)
+@@ -34,10 +46,16 @@ func hex2byte(s string) ([]byte, error)
  // call this function before calling all the other operations
  // this function is not thread safe
  func Init(curve int) error {
@@ -61,7 +63,7 @@
  	return nil
  }
  
-@@ -155,7 +171,7 @@ type SecretKey struct {
+@@ -155,7 +173,7 @@ type SecretKey struct {
  
  // Serialize --
  func (sec *SecretKey) Serialize() []byte {
@@ -70,7 +72,7 @@
  	// #nosec
  	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
  	if n == 0 {
-@@ -360,7 +376,7 @@ func (keys PublicKeys) JSON() string {
+@@ -360,7 +378,7 @@ func (keys PublicKeys) JSON() string {
  
  // Serialize --
  func (pub *PublicKey) Serialize() []byte {
@@ -79,7 +81,7 @@
  	// #nosec
  	n := C.blsPublicKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &pub.v)
  	if n == 0 {
-@@ -463,7 +479,7 @@ type Sign struct {
+@@ -463,7 +481,7 @@ type Sign struct {
  
  // Serialize --
  func (sig *Sign) Serialize() []byte {
@@ -88,7 +90,7 @@
  	// #nosec
  	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
  	if n == 0 {
-@@ -680,6 +696,47 @@ func (sig *Sign) VerifyAggregateHashes(p
+@@ -680,6 +698,47 @@ func (sig *Sign) VerifyAggregateHashes(p
  	return C.blsVerifyAggregatedHashes(&sig.v, &pubVec[0].v, unsafe.Pointer(&h[0]), C.mclSize(hashByte), C.mclSize(n)) == 1
  }
  
@@ -136,7 +138,7 @@
  ///
  
  var sRandReader io.Reader
-@@ -715,3 +772,103 @@ func SetRandFunc(randReader io.Reader) {
+@@ -715,3 +774,103 @@ func SetRandFunc(randReader io.Reader) {
  func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
  	C.blsGetGeneratorOfPublicKey(&pub.v)
  }
