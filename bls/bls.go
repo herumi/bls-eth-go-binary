@@ -22,10 +22,12 @@ int wrapReadRandCgo(void *self, void *buf, unsigned int n);
 */
 import "C"
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
+	"runtime"
 	"unsafe"
 )
 
@@ -723,6 +725,22 @@ func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
 	}
 	// #nosec
 	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+}
+
+// MultiVerify --
+// concatenatedMsg has the size of len(sigs) * 32
+func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
+	msgSize := 32
+	randSize := 8
+	threadNum := runtime.NumCPU()
+	n := len(sigs)
+	if n == 0 || len(pubs) != n || len(concatenatedMsg) != n*msgSize {
+		return false
+	}
+	randVec := make([]byte, n*randSize)
+	rand.Read(randVec)
+	// #nosec
+	return C.blsMultiVerify(&sigs[0].v, &pubs[0].v, unsafe.Pointer(&concatenatedMsg[0]), C.mclSize(msgSize), unsafe.Pointer(&randVec[0]), C.mclSize(randSize), C.mclSize(n), C.int(threadNum)) == 1
 }
 
 // Aggregate --

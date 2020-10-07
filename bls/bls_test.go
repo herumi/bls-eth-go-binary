@@ -371,20 +371,24 @@ func ethFastAggregateVerifyTest(t *testing.T) {
 	}
 }
 
-func blsAggregateVerifyNoCheckTestOne(t *testing.T, n int) {
-	t.Logf("blsAggregateVerifyNoCheckTestOne %v\n", n)
+func makeMultiSig(n int) (pubs []PublicKey, sigs []Sign, msgs []byte) {
 	msgSize := 32
-	pubs := make([]PublicKey, n)
-	sigs := make([]Sign, n)
-	msgs := make([]byte, n*msgSize)
+	pubs = make([]PublicKey, n)
+	sigs = make([]Sign, n)
+	msgs = make([]byte, n*msgSize)
 	for i := 0; i < n; i++ {
 		var sec SecretKey
 		sec.SetByCSPRNG()
 		pubs[i] = *sec.GetPublicKey()
-
 		msgs[msgSize*i] = byte(i)
 		sigs[i] = *sec.SignByte(msgs[msgSize*i : msgSize*(i+1)])
 	}
+	return pubs, sigs, msgs
+}
+
+func blsAggregateVerifyNoCheckTestOne(t *testing.T, n int) {
+	t.Logf("blsAggregateVerifyNoCheckTestOne %v\n", n)
+	pubs, sigs, msgs := makeMultiSig(n)
 	if !AreAllMsgDifferent(msgs) {
 		t.Fatalf("bad msgs")
 	}
@@ -418,7 +422,7 @@ func ethAggregateTest(t *testing.T) {
 	reader.Comma = ' '
 	i := 0
 	for {
-		t.Logf("QQQ i=%v\n", i)
+		t.Logf("ethAggregateTest i=%v\n", i)
 		i++
 		var sigVec []Sign
 		var s []string
@@ -515,6 +519,22 @@ func testEthDraft07(t *testing.T) {
 	blsAggregateVerifyNoCheckTest(t)
 }
 
+func testMultiVerifyOne(n int) bool {
+	pubs, sigs, msgs := makeMultiSig(n)
+	return MultiVerify(sigs, pubs, msgs)
+}
+
+func testMultiVerify(t *testing.T) {
+	tbl := []int{1, 2, 15, 16, 17, 50, 50, 100, 200, 400}
+	for i := 0; i < len(tbl); i++ {
+		n := tbl[i]
+		ret := testMultiVerifyOne(n)
+		if !ret {
+			t.Fatalf("testMultiVerifyOne n=%v ret=%v\n", n, ret)
+		}
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -535,6 +555,7 @@ func Test(t *testing.T) {
 	testSignAndVerifyHash(t)
 	testVerifyAggreageteHash(t)
 	testEthDraft07(t)
+	testMultiVerify(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
@@ -647,4 +668,32 @@ func BenchmarkAreAllMsgDifferent(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		AreAllMsgDifferent(msgVec)
 	}
+}
+
+func NaieveMultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
+	msgSize := 32
+	n := len(sigs)
+	if n == 0 || len(pubs) != n || len(concatenatedMsg) != n*msgSize {
+		return false
+	}
+	for i := 0; i < n; i++ {
+		if !sigs[i].VerifyByte(&pubs[i], concatenatedMsg[msgSize*i:msgSize*(i+1)]) {
+			return false
+		}
+	}
+	return true
+}
+
+func BenchmarkNaieveMultiVerify(b *testing.B) {
+	b.StopTimer()
+	pubs, sigs, msgs := makeMultiSig(400)
+	b.StartTimer()
+	NaieveMultiVerify(sigs, pubs, msgs)
+}
+
+func BenchmarkMultiVerify(b *testing.B) {
+	b.StopTimer()
+	pubs, sigs, msgs := makeMultiSig(400)
+	b.StartTimer()
+	MultiVerify(sigs, pubs, msgs)
 }
