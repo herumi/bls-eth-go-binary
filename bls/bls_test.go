@@ -689,7 +689,9 @@ func BenchmarkNaieveMultiVerify(b *testing.B) {
 	SetRandFunc(nil)
 	pubs, sigs, msgs := makeMultiSig(400)
 	b.StartTimer()
-	NaieveMultiVerify(sigs, pubs, msgs)
+	for i := 0; i < b.N; i++ {
+		NaieveMultiVerify(sigs, pubs, msgs)
+	}
 }
 
 func BenchmarkMultiVerify(b *testing.B) {
@@ -697,5 +699,7 @@ func BenchmarkMultiVerify(b *testing.B) {
 	SetRandFunc(nil)
 	pubs, sigs, msgs := makeMultiSig(400)
 	b.StartTimer()
-	MultiVerify(sigs, pubs, msgs)
+	for i := 0; i < b.N; i++ {
+		MultiVerify(sigs, pubs, msgs)
+	}
 }
