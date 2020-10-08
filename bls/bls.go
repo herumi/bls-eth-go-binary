@@ -728,11 +728,82 @@ func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
 }
 
 // MultiVerify --
+// true if all (sigs[i], pubs[i], concatenatedMsg[msgSize*i:msgSize*(i+1)]) are valid
 // concatenatedMsg has the size of len(sigs) * 32
 func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 	msgSize := 32
 	randSize := 8
-	threadNum := runtime.NumCPU()
+	threadN := runtime.NumCPU()
+	n := len(sigs)
+	if n == 0 || len(pubs) != n || len(concatenatedMsg) != n*msgSize {
+		return false
+	}
+	randVec := make([]byte, n*randSize)
+	rand.Read(randVec)
+
+	var e C.mclBnGT
+	var aggSig Sign
+	msg := uintptr(unsafe.Pointer(&concatenatedMsg[0]))
+	rp := uintptr(unsafe.Pointer(&randVec[0]))
+
+	maxThreadN := 32
+	if threadN > maxThreadN {
+		threadN = maxThreadN
+	}
+	minN := 16
+	if threadN > 1 && n >= minN {
+		et := make([]C.mclBnGT, threadN)
+		aggSigt := make([]Sign, threadN)
+		blockN := n / minN
+		q := blockN / threadN
+		r := blockN % threadN
+		cs := make(chan int, threadN)
+		sub := func(i int, sigs []Sign, pubs []PublicKey, msg uintptr, rp uintptr, m int) {
+			C.blsMultiVerifySub(&et[i], &aggSigt[i].v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(m))
+			cs <- 1
+		}
+		for i := 0; i < threadN; i++ {
+			m := q
+			if r > 0 {
+				m++
+				r--
+			}
+			if m == 0 {
+				threadN = i // n is too small for threadN
+				break
+			}
+			m *= minN
+			if i == threadN-1 {
+				m = n // remain all
+			}
+			// C.blsMultiVerifySub(&et[i], &aggSigt[i].v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(m))
+			go sub(i, sigs, pubs, msg, rp, m)
+			sigs = sigs[m:]
+			pubs = pubs[m:]
+			msg += uintptr(msgSize * m)
+			rp += uintptr(randSize * m)
+			n -= m
+		}
+		for i := 0; i < threadN; i++ {
+			<-cs
+		}
+		e = et[0]
+		aggSig = aggSigt[0]
+		for i := 1; i < threadN; i++ {
+			C.mclBnGT_mul(&e, &e, &et[i])
+			aggSig.Add(&aggSigt[i])
+		}
+	} else {
+		C.blsMultiVerifySub(&e, &aggSig.v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(n))
+	}
+	return C.blsMultiVerifyFinal(&e, &aggSig.v) == 1
+}
+
+/*
+func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
+	msgSize := 32
+	randSize := 8
+	threadN := runtime.NumCPU()
 	n := len(sigs)
 	if n == 0 || len(pubs) != n || len(concatenatedMsg) != n*msgSize {
 		return false
@@ -740,8 +811,9 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 	randVec := make([]byte, n*randSize)
 	rand.Read(randVec)
 	// #nosec
-	return C.blsMultiVerify(&sigs[0].v, &pubs[0].v, unsafe.Pointer(&concatenatedMsg[0]), C.mclSize(msgSize), unsafe.Pointer(&randVec[0]), C.mclSize(randSize), C.mclSize(n), C.int(threadNum)) == 1
+	return C.blsMultiVerify(&sigs[0].v, &pubs[0].v, unsafe.Pointer(&concatenatedMsg[0]), C.mclSize(msgSize), unsafe.Pointer(&randVec[0]), C.mclSize(randSize), C.mclSize(n), C.int(threadN)) == 1
 }
+*/
 
 // Aggregate --
 func (sig *Sign) Aggregate(sigVec []Sign) {
