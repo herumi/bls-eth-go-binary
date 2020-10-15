@@ -558,6 +558,16 @@ func (sec *SecretKey) GetPublicKey() (pub *PublicKey) {
 	return pub
 }
 
+// GetSafePublicKey -- error if sec is zero
+func (sec *SecretKey) GetSafePublicKey() (pub *PublicKey, err error) {
+	if sec.IsZero() {
+		return nil, fmt.Errorf("sec is zero")
+	}
+	pub = new(PublicKey)
+	C.blsGetPublicKey(&pub.v, &sec.v)
+	return pub, nil
+}
+
 // Sign -- Constant Time version
 func (sec *SecretKey) Sign(m string) (sig *Sign) {
 	sig = new(Sign)

@@ -535,6 +535,19 @@ func testMultiVerify(t *testing.T) {
 	}
 }
 
+func testGetSafePublicKey(t *testing.T) {
+	var sec SecretKey
+	pub, err := sec.GetSafePublicKey()
+	if pub != nil || err == nil {
+		t.Fatalf("sec must be zero")
+	}
+	sec.SetByCSPRNG()
+	pub, err = sec.GetSafePublicKey()
+	if pub == nil || err != nil {
+		t.Fatalf("sec must be non-zero")
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -556,6 +569,7 @@ func Test(t *testing.T) {
 	testVerifyAggreageteHash(t)
 	testEthDraft07(t)
 	testMultiVerify(t)
+	testGetSafePublicKey(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
