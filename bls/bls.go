@@ -748,13 +748,9 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 	if n == 0 || len(pubs) != n || len(concatenatedMsg) != n*msgSize {
 		return false
 	}
-	randVec := make([]byte, n*randSize)
-	rand.Read(randVec)
-
 	var e C.mclBnGT
 	var aggSig Sign
 	msg := uintptr(unsafe.Pointer(&concatenatedMsg[0]))
-	rp := uintptr(unsafe.Pointer(&randVec[0]))
 
 	maxThreadN := 32
 	if threadN > maxThreadN {
@@ -768,8 +764,10 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 		q := blockN / threadN
 		r := blockN % threadN
 		cs := make(chan int, threadN)
-		sub := func(i int, sigs []Sign, pubs []PublicKey, msg uintptr, rp uintptr, m int) {
-			C.blsMultiVerifySub(&et[i], &aggSigt[i].v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(m))
+		sub := func(i int, sigs []Sign, pubs []PublicKey, msg uintptr, m int) {
+			randVec := make([]byte, m*randSize)
+			rand.Read(randVec)
+			C.blsMultiVerifySub(&et[i], &aggSigt[i].v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(&randVec[0])), C.mclSize(randSize), C.mclSize(m))
 			cs <- 1
 		}
 		for i := 0; i < threadN; i++ {
@@ -786,12 +784,10 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 			if i == threadN-1 {
 				m = n // remain all
 			}
-			// C.blsMultiVerifySub(&et[i], &aggSigt[i].v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(m))
-			go sub(i, sigs, pubs, msg, rp, m)
+			go sub(i, sigs, pubs, msg, m)
 			sigs = sigs[m:]
 			pubs = pubs[m:]
 			msg += uintptr(msgSize * m)
-			rp += uintptr(randSize * m)
 			n -= m
 		}
 		for i := 0; i < threadN; i++ {
@@ -804,7 +800,9 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 			aggSig.Add(&aggSigt[i])
 		}
 	} else {
-		C.blsMultiVerifySub(&e, &aggSig.v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(rp)), C.mclSize(randSize), C.mclSize(n))
+		randVec := make([]byte, n*randSize)
+		rand.Read(randVec)
+		C.blsMultiVerifySub(&e, &aggSig.v, &sigs[0].v, &pubs[0].v, (*C.char)(unsafe.Pointer(msg)), C.mclSize(msgSize), (*C.char)(unsafe.Pointer(&randVec[0])), C.mclSize(randSize), C.mclSize(n))
 	}
 	return C.blsMultiVerifyFinal(&e, &aggSig.v) == 1
 }
