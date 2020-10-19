@@ -752,11 +752,13 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 	var aggSig Sign
 	msg := uintptr(unsafe.Pointer(&concatenatedMsg[0]))
 
+/*
 	maxThreadN := 32
 	if threadN > maxThreadN {
 		threadN = maxThreadN
 	}
-	minN := 16
+*/
+	minN := 4
 	if threadN > 1 && n >= minN {
 		et := make([]C.mclBnGT, threadN)
 		aggSigt := make([]Sign, threadN)
