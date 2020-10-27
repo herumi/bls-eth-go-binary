@@ -57,8 +57,8 @@ The following steps are not necessary if you use compiled binary in this reposit
 ```
 mkdir work
 cd work
-git clone https://github.com/herumi/mcl
-git clone https://github.com/herumi/bls
+git clone https://github.com/herumi/mcl -b v1.26
+git clone https://github.com/herumi/bls -b v1.11
 git clone https://github.com/herumi/bls-eth-go-binary
 cd bls-eth-go-binary
 make CXX=clang++

@@ -27,6 +27,10 @@ ifeq ($(CPU),x86-64)
     _OS=openbsd
     MIN_CFLAGS+=-fPIC
   endif
+  ifeq ($(OS),freebsd)
+    _OS=freebsd
+    MIN_CFLAGS+=-fPIC
+  endif
 endif
 
 ifeq ($(CPU),aarch64)
