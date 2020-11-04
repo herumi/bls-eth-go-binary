@@ -67,7 +67,7 @@ BASE_LL=../mcl/src/base64.ll ../mcl/src/base32.ll
 	$(MAKE) -C ../mcl src/base32.ll BIT=32
 
 
-ANDROID_TARGET=armeabi-v7a arm64-v8a x86_64
+ANDROID_TARGET=armeabi-v7a # arm64-v8a x86_64
 android: $(BASE_LL)
 	@ndk-build -C android/jni NDK_DEBUG=0
 	@for target in $(ANDROID_TARGET); do \
