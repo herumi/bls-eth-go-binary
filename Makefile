@@ -40,6 +40,10 @@ ifeq ($(OS),Linux)
   MIN_CFLAGS+=-fPIC
 endif
 endif
+ifeq ($(OS),mac-m1)
+  _OS=darwin
+  MIN_CFLAGS+=-fPIC
+endif
 
 LIB_DIR=bls/lib/$(_OS)/$(_ARCH)
 
