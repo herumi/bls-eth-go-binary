@@ -699,7 +699,7 @@ func (sig *Sign) VerifyAggregateHashes(pubVec []PublicKey, hash [][]byte) bool {
 		return false
 	}
 	n := len(hash)
-	if n == 0 {
+	if n == 0 || len(pubVec) != n {
 		return false
 	}
 	hashByte := len(hash[0])
@@ -841,11 +841,11 @@ func (sig *Sign) Aggregate(sigVec []Sign) {
 
 // FastAggregateVerify --
 func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
-	if pubVec == nil {
+	if pubVec == nil || len(pubVec) == 0 {
 		return false
 	}
 	n := len(pubVec)
-	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), getMsgPointer(msg), C.mclSize(len(msg))) == 1
 }
 
 ///
