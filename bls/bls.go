@@ -731,7 +731,7 @@ func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
 
 // VerifyByte --
 func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
-	if sig == nil || pub == nil {
+	if sig == nil || pub == nil || len(msg) == 0 {
 		return false
 	}
 	// #nosec
@@ -753,12 +753,12 @@ func MultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bool {
 	var aggSig Sign
 	msg := uintptr(unsafe.Pointer(&concatenatedMsg[0]))
 
-/*
-	maxThreadN := 32
-	if threadN > maxThreadN {
-		threadN = maxThreadN
-	}
-*/
+	/*
+		maxThreadN := 32
+		if threadN > maxThreadN {
+			threadN = maxThreadN
+		}
+	*/
 	minN := 4
 	if threadN > 1 && n >= minN {
 		et := make([]C.mclBnGT, threadN)

@@ -548,6 +548,21 @@ func testGetSafePublicKey(t *testing.T) {
 	}
 }
 
+func testEmptyMessage(t *testing.T) {
+	var sk SecretKey
+	var sk_bytes = []byte{99, 64, 58, 175, 15, 139, 113, 184, 37, 222, 127,
+		204, 233, 209, 34, 8, 61, 27, 85, 251, 68, 31, 255, 214, 8, 189, 190,
+		71,
+		198, 16, 210, 91}
+	sk.Deserialize(sk_bytes)
+	pk := sk.GetPublicKey()
+	sig := sk.SignByte([]byte("message"))
+	emptyMsg := []byte("")
+	if sig.VerifyByte(pk, emptyMsg) {
+		t.Fatalf("bad verify")
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -570,6 +585,7 @@ func Test(t *testing.T) {
 	testEthDraft07(t)
 	testMultiVerify(t)
 	testGetSafePublicKey(t)
+	testEmptyMessage(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
