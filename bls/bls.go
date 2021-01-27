@@ -45,6 +45,14 @@ func hex2byte(s string) ([]byte, error) {
 	return hex.DecodeString(s)
 }
 
+// allow zero length byte
+func getPointer(msg []byte) unsafe.Pointer {
+	if len(msg) == 0 {
+		return nil
+	}
+	return unsafe.Pointer(&msg[0])
+}
+
 // Init --
 // call this function before calling all the other operations
 // this function is not thread safe
@@ -81,8 +89,8 @@ func (id *ID) Serialize() []byte {
 // Deserialize --
 func (id *ID) Deserialize(buf []byte) error {
 	// #nosec
-	err := C.blsIdDeserialize(&id.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
-	if err == 0 {
+	n := C.blsIdDeserialize(&id.v, getPointer(buf), C.mclSize(len(buf)))
+	if n == 0 || int(n) != len(buf) {
 		return fmt.Errorf("err blsIdDeserialize %x", buf)
 	}
 	return nil
@@ -188,8 +196,8 @@ func (sec *SecretKey) Serialize() []byte {
 // Deserialize --
 func (sec *SecretKey) Deserialize(buf []byte) error {
 	// #nosec
-	err := C.blsSecretKeyDeserialize(&sec.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
-	if err == 0 {
+	n := C.blsSecretKeyDeserialize(&sec.v, getPointer(buf), C.mclSize(len(buf)))
+	if n == 0 || int(n) != len(buf) {
 		return fmt.Errorf("err blsSecretKeyDeserialize %x", buf)
 	}
 	return nil
@@ -393,8 +401,8 @@ func (pub *PublicKey) Serialize() []byte {
 // Deserialize --
 func (pub *PublicKey) Deserialize(buf []byte) error {
 	// #nosec
-	err := C.blsPublicKeyDeserialize(&pub.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
-	if err == 0 {
+	n := C.blsPublicKeyDeserialize(&pub.v, getPointer(buf), C.mclSize(len(buf)))
+	if n == 0 || int(n) != len(buf) {
 		return fmt.Errorf("err blsPublicKeyDeserialize %x", buf)
 	}
 	return nil
@@ -496,8 +504,8 @@ func (sig *Sign) Serialize() []byte {
 // Deserialize --
 func (sig *Sign) Deserialize(buf []byte) error {
 	// #nosec
-	err := C.blsSignatureDeserialize(&sig.v, unsafe.Pointer(&buf[0]), C.mclSize(len(buf)))
-	if err == 0 {
+	n := C.blsSignatureDeserialize(&sig.v, getPointer(buf), C.mclSize(len(buf)))
+	if n == 0 { //|| int(n) != len(buf) {
 		return fmt.Errorf("err blsSignatureDeserialize %x", buf)
 	}
 	return nil
@@ -721,19 +729,11 @@ func SignatureVerifyOrder(doVerify bool) {
 	C.blsSignatureVerifyOrder(C.int(b))
 }
 
-// allow zero length byte
-func getMsgPointer(msg []byte) unsafe.Pointer {
-	if len(msg) == 0 {
-		return nil
-	}
-	return unsafe.Pointer(&msg[0])
-}
-
 // SignByte --
 func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
 	sig = new(Sign)
 	// #nosec
-	C.blsSign(&sig.v, &sec.v, getMsgPointer(msg), C.mclSize(len(msg)))
+	C.blsSign(&sig.v, &sec.v, getPointer(msg), C.mclSize(len(msg)))
 	return sig
 }
 
@@ -743,7 +743,7 @@ func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
 		return false
 	}
 	// #nosec
-	return C.blsVerify(&sig.v, &pub.v, getMsgPointer(msg), C.mclSize(len(msg))) == 1
+	return C.blsVerify(&sig.v, &pub.v, getPointer(msg), C.mclSize(len(msg))) == 1
 }
 
 // MultiVerify --
@@ -845,7 +845,7 @@ func (sig *Sign) FastAggregateVerify(pubVec []PublicKey, msg []byte) bool {
 		return false
 	}
 	n := len(pubVec)
-	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), getMsgPointer(msg), C.mclSize(len(msg))) == 1
+	return C.blsFastAggregateVerify(&sig.v, &pubVec[0].v, C.mclSize(n), getPointer(msg), C.mclSize(len(msg))) == 1
 }
 
 ///
