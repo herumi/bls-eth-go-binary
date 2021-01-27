@@ -561,6 +561,10 @@ func testEmptyMessage(t *testing.T) {
 	if sig.VerifyByte(pk, emptyMsg) {
 		t.Fatalf("bad verify")
 	}
+	sig = sk.SignByte(emptyMsg)
+	if !sig.VerifyByte(pk, emptyMsg) {
+		t.Fatalf("bad verify")
+	}
 }
 
 func Test(t *testing.T) {

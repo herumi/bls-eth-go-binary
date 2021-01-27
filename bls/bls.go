@@ -721,21 +721,29 @@ func SignatureVerifyOrder(doVerify bool) {
 	C.blsSignatureVerifyOrder(C.int(b))
 }
 
+// allow zero length byte
+func getMsgPointer(msg []byte) unsafe.Pointer {
+	if len(msg) == 0 {
+		return nil
+	}
+	return unsafe.Pointer(&msg[0])
+}
+
 // SignByte --
 func (sec *SecretKey) SignByte(msg []byte) (sig *Sign) {
 	sig = new(Sign)
 	// #nosec
-	C.blsSign(&sig.v, &sec.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg)))
+	C.blsSign(&sig.v, &sec.v, getMsgPointer(msg), C.mclSize(len(msg)))
 	return sig
 }
 
 // VerifyByte --
 func (sig *Sign) VerifyByte(pub *PublicKey, msg []byte) bool {
-	if sig == nil || pub == nil || len(msg) == 0 {
+	if sig == nil || pub == nil {
 		return false
 	}
 	// #nosec
-	return C.blsVerify(&sig.v, &pub.v, unsafe.Pointer(&msg[0]), C.mclSize(len(msg))) == 1
+	return C.blsVerify(&sig.v, &pub.v, getMsgPointer(msg), C.mclSize(len(msg))) == 1
 }
 
 // MultiVerify --
