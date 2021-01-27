@@ -567,6 +567,56 @@ func testEmptyMessage(t *testing.T) {
 	}
 }
 
+func testZero(t *testing.T) {
+	msg := []byte("random message")
+	var pk_bytes = make([]byte, 48)
+	var sig_bytes = make([]byte, 96)
+	for u := 0; u < 16; u++ {
+		pk_bytes[0] = byte(u * 16)
+		for v := 0; v < 16; v++ {
+			sig_bytes[0] = byte(v * 16)
+			var pk PublicKey
+			var sig Sign
+			if sig.Deserialize(sig_bytes[:]) == nil {
+				if pk.Deserialize(pk_bytes[:]) == nil {
+					if sig.VerifyByte(&pk, msg) {
+						t.Fatalf("Signature verification bypass: %+v, %+v\n", sig_bytes, pk_bytes)
+					}
+				}
+			}
+		}
+	}
+}
+
+func testMalleabilityInsertExtraByte(t *testing.T) {
+	var sig_mod = [][]byte{{152, 190, 147, 15, 180, 90, 190, 210, 76, 131,
+		149, 37, 243, 169, 83, 54, 0, 121, 165, 47, 154, 35, 239, 122, 200, 151,
+		233, 151, 38, 114, 196, 15, 251, 64, 255, 209, 29, 201, 63, 73, 142, 202,
+		68, 198, 18, 207, 235, 203, 16, 64, 62, 37, 80, 146, 73, 5, 44, 110, 0,
+		221, 223, 154, 159, 201, 106, 77, 181, 229, 23, 32, 243, 51, 184, 199, 12,
+		108, 28, 183, 160, 117, 110, 71, 24, 145, 246, 178, 233, 121, 214, 100, 74,
+		160, 104, 235, 210, 6}, {152, 190, 147, 15, 180, 90, 190, 210, 76, 131,
+		149, 37, 243, 169, 83, 54, 0, 121, 165, 47, 154, 35, 239, 122, 200, 151,
+		233, 151, 38, 114, 196, 15, 251, 64, 255, 209, 29, 201, 63, 73, 142, 202,
+		68, 198, 18, 207, 235, 203, 16, 64, 62, 37, 80, 146, 73, 5, 44, 110, 0,
+		221, 223, 154, 159, 201, 106, 77, 181, 229, 23, 32, 243, 51, 184, 199, 12,
+		108, 28, 183, 160, 117, 110, 71, 24, 145, 246, 178, 233, 121, 214, 100, 74,
+		160, 104, 235, 210, 6, 255}}
+	var pk_bytes = []byte{144, 43, 125, 243, 65, 129, 139, 149, 52, 137, 112, 232, 237, 214, 185, 171, 204, 120, 250, 107, 180, 108, 128, 46, 208, 177, 243, 15, 254, 37, 168, 64, 205, 113, 250, 38, 189, 59, 82, 80, 69, 93, 219, 127, 91, 3, 136, 130}
+	msg := []byte("message")
+	for i := 0; i < len(sig_mod); i++ {
+		var pk PublicKey
+		var sig Sign
+		if sig.Deserialize(sig_mod[i][:]) == nil {
+			if pk.Deserialize(pk_bytes[:]) == nil {
+				if sig.VerifyByte(&pk, msg) {
+					t.Fatalf("Verify signature return true with: %+v\n", sig_mod[i])
+				}
+			}
+		}
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -590,6 +640,8 @@ func Test(t *testing.T) {
 	testMultiVerify(t)
 	testGetSafePublicKey(t)
 	testEmptyMessage(t)
+	//	testZero(t)
+	//	testMalleabilityInsertExtraByte(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
