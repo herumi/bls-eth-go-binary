@@ -8,6 +8,8 @@ This repository contains compiled static library of https://github.com/herumi/bl
 * Sign; G2
 
 # News
+- 2021/Jan/28 (change specification) enable VerifySignatureOrder and VerifyPublicKeyOrder by default
+- 2021/Jan/28 (change specification) verify returns false for zero public key
 - 2021/Jan/02 support arm64 golang on M1 mac
 - 2020/Oct/15 `add SecretKey::GetSafePublicKey()`, which returns an error if sec is zero
 - 2020/Oct/08 `MultiVerify` returns true only if all signatures are valid.
@@ -58,8 +60,8 @@ The following steps are not necessary if you use compiled binary in this reposit
 ```
 mkdir work
 cd work
-git clone https://github.com/herumi/mcl -b v1.26
-git clone https://github.com/herumi/bls -b v1.11
+git clone https://github.com/herumi/mcl -b v1.31
+git clone https://github.com/herumi/bls -b v1.13
 git clone https://github.com/herumi/bls-eth-go-binary
 cd bls-eth-go-binary
 make CXX=clang++
