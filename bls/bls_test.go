@@ -635,6 +635,34 @@ func testMalleabilityInsertExtraByte(t *testing.T) {
 	}
 }
 
+func testSplittingZeroAttack(t *testing.T) {
+	// x1 + x2 = 0
+	var x1 SecretKey
+	var x2 SecretKey
+	var x1_bytes = []byte{99, 64, 58, 175, 15, 139, 113, 184, 37, 222, 127,
+		204, 233, 209, 34, 8, 61, 27, 85, 251, 68, 31, 255, 214, 8, 189,
+		190,
+		71, 198, 16, 210, 91}
+	var x2_bytes = []byte{16, 173, 108, 164, 26, 18, 11, 144, 13, 91, 88,
+		59,
+		31, 208, 181, 253, 22, 162, 78, 7, 187, 222, 92, 40, 247, 66, 65,
+		183,
+		57, 239, 45, 166}
+	x1.Deserialize(x1_bytes)
+	x2.Deserialize(x2_bytes)
+
+	// sig = 0
+	var sig_bytes = make([]byte, 96)
+	sig_bytes[0] = 192
+	var sig Sign
+	sig.Deserialize(sig_bytes)
+
+	msg := []byte("random message")
+	if sig.FastAggregateVerify([]PublicKey{*x1.GetPublicKey(), *x2.GetPublicKey()}, msg) {
+		t.Fatalf("bad verify")
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -658,7 +686,8 @@ func Test(t *testing.T) {
 	testMultiVerify(t)
 	testGetSafePublicKey(t)
 	testEmptyMessage(t)
-	//	testZero(t)
+	testSplittingZeroAttack(t)
+	testZero(t)
 	testMalleabilityInsertExtraByte(t)
 }
 
