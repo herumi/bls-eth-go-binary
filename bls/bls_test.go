@@ -548,121 +548,6 @@ func testGetSafePublicKey(t *testing.T) {
 	}
 }
 
-func testEmptyMessage(t *testing.T) {
-	var sk SecretKey
-	var sk_bytes = []byte{99, 64, 58, 175, 15, 139, 113, 184, 37, 222, 127,
-		204, 233, 209, 34, 8, 61, 27, 85, 251, 68, 31, 255, 214, 8, 189, 190,
-		71,
-		198, 16, 210, 91}
-	sk.Deserialize(sk_bytes)
-	pk := sk.GetPublicKey()
-	sig := sk.SignByte([]byte("message"))
-	emptyMsg := []byte("")
-	if sig.VerifyByte(pk, emptyMsg) {
-		t.Fatalf("bad verify")
-	}
-	sig = sk.SignByte(emptyMsg)
-	if !sig.VerifyByte(pk, emptyMsg) {
-		t.Fatalf("bad verify")
-	}
-}
-
-func testZero(t *testing.T) {
-	msg := []byte("random message")
-	var pk_bytes = make([]byte, 48)
-	var sig_bytes = make([]byte, 96)
-	for u := 0; u < 16; u++ {
-		pk_bytes[0] = byte(u * 16)
-		for v := 0; v < 16; v++ {
-			sig_bytes[0] = byte(v * 16)
-			var pk PublicKey
-			var sig Sign
-			if sig.Deserialize(sig_bytes[:]) == nil {
-				if pk.Deserialize(pk_bytes[:]) == nil {
-					if sig.VerifyByte(&pk, msg) {
-						t.Fatalf("Signature verification bypass: %+v, %+v\n", sig_bytes, pk_bytes)
-					}
-				}
-			}
-		}
-	}
-}
-
-func testMalleabilityInsertExtraByte(t *testing.T) {
-	{
-		zero := []byte("")
-		var sec SecretKey
-		var pub PublicKey
-		var sig Sign
-		if sec.Deserialize(zero) == nil {
-			t.Fatalf("bad sec deserialize")
-		}
-		if pub.Deserialize(zero) == nil {
-			t.Fatalf("bad pub deserialize")
-		}
-		if sig.Deserialize(zero) == nil {
-			t.Fatalf("bad sig deserialize")
-		}
-	}
-	var sig_mod = [][]byte{{152, 190, 147, 15, 180, 90, 190, 210, 76, 131,
-		149, 37, 243, 169, 83, 54, 0, 121, 165, 47, 154, 35, 239, 122, 200, 151,
-		233, 151, 38, 114, 196, 15, 251, 64, 255, 209, 29, 201, 63, 73, 142, 202,
-		68, 198, 18, 207, 235, 203, 16, 64, 62, 37, 80, 146, 73, 5, 44, 110, 0,
-		221, 223, 154, 159, 201, 106, 77, 181, 229, 23, 32, 243, 51, 184, 199, 12,
-		108, 28, 183, 160, 117, 110, 71, 24, 145, 246, 178, 233, 121, 214, 100, 74,
-		160, 104, 235, 210, 6}, {152, 190, 147, 15, 180, 90, 190, 210, 76, 131,
-		149, 37, 243, 169, 83, 54, 0, 121, 165, 47, 154, 35, 239, 122, 200, 151,
-		233, 151, 38, 114, 196, 15, 251, 64, 255, 209, 29, 201, 63, 73, 142, 202,
-		68, 198, 18, 207, 235, 203, 16, 64, 62, 37, 80, 146, 73, 5, 44, 110, 0,
-		221, 223, 154, 159, 201, 106, 77, 181, 229, 23, 32, 243, 51, 184, 199, 12,
-		108, 28, 183, 160, 117, 110, 71, 24, 145, 246, 178, 233, 121, 214, 100, 74,
-		160, 104, 235, 210, 6, 255}}
-	var pk_bytes = []byte{144, 43, 125, 243, 65, 129, 139, 149, 52, 137, 112, 232, 237, 214, 185, 171, 204, 120, 250, 107, 180, 108, 128, 46, 208, 177, 243, 15, 254, 37, 168, 64, 205, 113, 250, 38, 189, 59, 82, 80, 69, 93, 219, 127, 91, 3, 136, 130}
-	msg := []byte("message")
-	for i := 0; i < len(sig_mod); i++ {
-		var pk PublicKey
-		var sig Sign
-		if sig.Deserialize(sig_mod[i][:]) == nil {
-			if pk.Deserialize(pk_bytes[:]) == nil {
-				if len(sig_mod[i][:]) == 96 {
-					continue
-				}
-				if sig.VerifyByte(&pk, msg) {
-					t.Logf("Verify signature return true with: %+v\n", sig_mod[i])
-				}
-			}
-		}
-	}
-}
-
-func testSplittingZeroAttack(t *testing.T) {
-	// x1 + x2 = 0
-	var x1 SecretKey
-	var x2 SecretKey
-	var x1_bytes = []byte{99, 64, 58, 175, 15, 139, 113, 184, 37, 222, 127,
-		204, 233, 209, 34, 8, 61, 27, 85, 251, 68, 31, 255, 214, 8, 189,
-		190,
-		71, 198, 16, 210, 91}
-	var x2_bytes = []byte{16, 173, 108, 164, 26, 18, 11, 144, 13, 91, 88,
-		59,
-		31, 208, 181, 253, 22, 162, 78, 7, 187, 222, 92, 40, 247, 66, 65,
-		183,
-		57, 239, 45, 166}
-	x1.Deserialize(x1_bytes)
-	x2.Deserialize(x2_bytes)
-
-	// sig = 0
-	var sig_bytes = make([]byte, 96)
-	sig_bytes[0] = 192
-	var sig Sign
-	sig.Deserialize(sig_bytes)
-
-	msg := []byte("random message")
-	if sig.FastAggregateVerify([]PublicKey{*x1.GetPublicKey(), *x2.GetPublicKey()}, msg) {
-		t.Fatalf("bad verify")
-	}
-}
-
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -685,10 +570,6 @@ func Test(t *testing.T) {
 	testEthDraft07(t)
 	testMultiVerify(t)
 	testGetSafePublicKey(t)
-	testEmptyMessage(t)
-	testSplittingZeroAttack(t)
-	testZero(t)
-	testMalleabilityInsertExtraByte(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
