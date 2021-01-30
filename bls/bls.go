@@ -505,7 +505,7 @@ func (sig *Sign) Serialize() []byte {
 func (sig *Sign) Deserialize(buf []byte) error {
 	// #nosec
 	n := C.blsSignatureDeserialize(&sig.v, getPointer(buf), C.mclSize(len(buf)))
-	if n == 0 { //|| int(n) != len(buf) {
+	if n == 0 || int(n) != len(buf) {
 		return fmt.Errorf("err blsSignatureDeserialize %x", buf)
 	}
 	return nil
