@@ -60,7 +60,7 @@ The following steps are not necessary if you use compiled binary in this reposit
 ```
 mkdir work
 cd work
-git clone https://github.com/herumi/mcl -b v1.31
+git clone https://github.com/herumi/mcl -b v1.33
 git clone https://github.com/herumi/bls -b v1.13
 git clone https://github.com/herumi/bls-eth-go-binary
 cd bls-eth-go-binary
