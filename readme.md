@@ -1,4 +1,4 @@
-[![Build Status](https://api.travis-ci.com/herumi/bls-eth-go-binary.svg?branch=master)](https://travis-ci.com/github/herumi/bls-eth-go-binary)
+[![Build Status](https://github.com/herumi/bls-eth-go-binary/actions/workflows/main.yml/badge.svg)](https://github.com/herumi/bls-eth-go-binary/actions/workflows/main.yml)
 
 # bls for eth with compiled static library
 
