@@ -128,6 +128,8 @@ update_patch:
 	-diff -up $(BLS_DIR)/ffi/go/bls/bls.go bls/bls.go > patch/bls.patch
 
 clean:
+	$(MAKE) -C $(MCL_DIR) clean
+	$(MAKE) -C $(BLS_DIR) clean
 	$(RM) -rf obj/*.o
 
 .PHONY: android ios each_ios clean
