@@ -22,15 +22,15 @@ ifeq ($(TARGET_ARCH_ABI),x86)
   LOCAL_CPPFLAGS += -DMCL_DONT_USE_XBYAK -fno-exceptions -fno-rtti
 endif
 ifeq ($(MY_BIT),64)
-  MY_BASE_LL := $(LOCAL_PATH)/../../../mcl/src/base64.ll
+  MY_BASE_LL := $(LOCAL_PATH)/../../src/mcl/src/base64.ll
   LOCAL_CPPFLAGS += -DMCL_SIZEOF_UNIT=8
 endif
 ifeq ($(MY_BIT),32)
-  MY_BASE_LL := $(LOCAL_PATH)/../../../mcl/src/base32.ll
+  MY_BASE_LL := $(LOCAL_PATH)/../../src/mcl/src/base32.ll
   LOCAL_CPPFLAGS += -DMCL_SIZEOF_UNIT=4
 endif
-LOCAL_SRC_FILES :=  $(LOCAL_PATH)/../../../bls/src/bls_c384_256.cpp $(LOCAL_PATH)/../../../mcl/src/fp.cpp $(MY_BASE_LL)
-LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../../bls/include $(LOCAL_PATH)/../../../mcl/include
+LOCAL_SRC_FILES :=  $(LOCAL_PATH)/../../src/bls/src/bls_c384_256.cpp $(LOCAL_PATH)/../../src/mcl/src/fp.cpp $(MY_BASE_LL)
+LOCAL_C_INCLUDES := $(LOCAL_PATH)/../../src/bls/include $(LOCAL_PATH)/../../src/mcl/include
 LOCAL_CPPFLAGS += -O3 -DNDEBUG -fPIC -DMCL_DONT_USE_OPENSSL -DMCL_LLVM_BMI2=0 -DMCL_USE_LLVM=1 -DMCL_USE_VINT -DMCL_VINT_FIXED_BUFFER -DMCL_MAX_BIT_SIZE=384 -DCYBOZU_DONT_USE_EXCEPTION -DCYBOZU_DONT_USE_STRING -std=c++03
 LOCAL_CPPFLAGS += -fno-threadsafe-statics
 
