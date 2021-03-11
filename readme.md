@@ -59,11 +59,8 @@ The following steps are not necessary if you use compiled binary in this reposit
 
 ## Linux, Mac, Windows(mingw64)
 ```
-mkdir work
-cd work
-git clone https://github.com/herumi/mcl -b v1.36
-git clone https://github.com/herumi/bls -b v1.14
-git clone https://github.com/herumi/bls-eth-go-binary
+git clone --recursive https://github.com/herumi/bls-eth-go-binary
+# git submodule update --init --recursive
 cd bls-eth-go-binary
 make CXX=clang++
 go test ./bls -bench "Pairing|Sign|Verify"
