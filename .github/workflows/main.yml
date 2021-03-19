@@ -11,4 +11,19 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - run: go test -v ./bls
+    - run: git submodule update --init --recursive
+    - name: build on linux
+      if: runner.os == 'Linux'
+      run: |
+        sudo apt install nasm
+        make clean
+        make CXX=clang++
+        go test -v ./bls
+    - name: build on mac
+      if: runner.os == 'macOS'
+      run: |
+        brew install nasm
+        make clean
+        make
+        go test -v ./bls
 

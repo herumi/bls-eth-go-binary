@@ -1,6 +1,6 @@
 SRC_DIR?=src
-MCL_DIR=$(SRC_DIR)/mcl
 BLS_DIR=$(SRC_DIR)/bls
+MCL_DIR=$(BLS_DIR)/mcl
 include $(MCL_DIR)/common.mk
 ETH_CFLAGS=-DBLS_ETH -DBLS_SWAP_G
 
