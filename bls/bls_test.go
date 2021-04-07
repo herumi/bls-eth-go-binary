@@ -700,7 +700,6 @@ func NaieveMultiVerify(sigs []Sign, pubs []PublicKey, concatenatedMsg []byte) bo
 
 func BenchmarkNaieveMultiVerify(b *testing.B) {
 	b.StopTimer()
-	SetRandFunc(nil)
 	pubs, sigs, msgs := makeMultiSig(400)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
@@ -710,7 +709,6 @@ func BenchmarkNaieveMultiVerify(b *testing.B) {
 
 func BenchmarkMultiVerify(b *testing.B) {
 	b.StopTimer()
-	SetRandFunc(nil)
 	pubs, sigs, msgs := makeMultiSig(400)
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {

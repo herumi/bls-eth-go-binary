@@ -25,4 +25,5 @@ func TestRand(t *testing.T) {
 	fmt.Printf("rand.Reader\n")
 	SetRandFunc(rand.Reader)
 	genSec(t)
+	SetRandFunc(nil)
 }
