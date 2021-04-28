@@ -1,5 +1,5 @@
---- src/bls/ffi/go/bls/bls.go	2021-04-28 17:33:31.794253552 +0900
-+++ bls/bls.go	2021-04-28 18:03:11.195751414 +0900
+--- src/bls/ffi/go/bls/bls.go	2021-04-28 18:15:29.408595698 +0900
++++ bls/bls.go	2021-04-28 18:14:19.268844171 +0900
 @@ -1,17 +1,10 @@
  package bls
  
@@ -64,13 +64,3 @@
  	// #nosec
  	n := C.blsSignatureSerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sig.v)
  	if n == 0 {
-@@ -806,3 +805,9 @@ func SetGeneratorOfPublicKey(pub *Public
- 	}
- 	return nil
- }
-+
-+// keep for backward compatibility
-+func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
-+	GetGeneratorOfPublicKey(pub)
-+}
-+

@@ -810,4 +810,3 @@ func SetGeneratorOfPublicKey(pub *PublicKey) error {
 func BlsGetGeneratorOfPublicKey(pub *PublicKey) {
 	GetGeneratorOfPublicKey(pub)
 }
-
