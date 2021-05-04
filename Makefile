@@ -44,6 +44,9 @@ ifeq ($(CPU),arm)
   _ARCH=arm
   UNIT=4
 endif
+ifeq ($(CPU),systemz)
+  _ARCH=s390x
+endif
 
 LIB_DIR=bls/lib/$(_OS)/$(_ARCH)
 
