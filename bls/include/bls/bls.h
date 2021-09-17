@@ -107,6 +107,14 @@ BLS_DLL_API int blsSetETHmode(int mode);
 */
 BLS_DLL_API void blsSetETHserialization(int ETHserialization);
 
+/*
+	set map-to-function to mode
+	MCL_MAP_TO_MODE_ORIGINAL ; for backward compatibility
+	MCL_MAP_TO_MODE_HASH_TO_CURVE ; irtf-cfrg-hash-to-curve
+	return 0 if success else -1
+*/
+BLS_DLL_API int blsSetMapToMode(int mode);
+
 BLS_DLL_API void blsIdSetInt(blsId *id, int x);
 
 // sec = buf & (1 << bitLen(r)) - 1
@@ -265,6 +273,19 @@ BLS_DLL_API void blsSecretKeySub(blsSecretKey *sec, const blsSecretKey *rhs);
 BLS_DLL_API void blsPublicKeySub(blsPublicKey *pub, const blsPublicKey *rhs);
 BLS_DLL_API void blsSignatureSub(blsSignature *sig, const blsSignature *rhs);
 
+// neg
+BLS_DLL_API void blsSecretKeyNeg(blsSecretKey *x);
+BLS_DLL_API void blsPublicKeyNeg(blsPublicKey *x);
+BLS_DLL_API void blsSignatureNeg(blsSignature *x);
+
+// mul y *= x
+BLS_DLL_API void blsSecretKeyMul(blsSecretKey *y, const blsSecretKey *x);
+BLS_DLL_API void blsPublicKeyMul(blsPublicKey *y, const blsSecretKey *x);
+BLS_DLL_API void blsSignatureMul(blsSignature *y, const blsSecretKey *x);
+
+BLS_DLL_API void blsPublicKeyMulVec(blsPublicKey *z, const blsPublicKey *x, const blsSecretKey *y, mclSize n);
+BLS_DLL_API void blsSignatureMulVec(blsSignature *z, const blsSignature *x, const blsSecretKey *y, mclSize n);
+
 // not thread safe version (old blsInit)
 BLS_DLL_API int blsInitNotThreadSafe(int curve, int compiledTimeVar);
 
@@ -339,6 +360,8 @@ BLS_DLL_API mclSize blsIdGetLittleEndian(void *buf, mclSize maxBufSize, const bl
 // return 0 if success
 BLS_DLL_API int blsSecretKeySetDecStr(blsSecretKey *sec, const char *buf, mclSize bufSize);
 BLS_DLL_API int blsSecretKeySetHexStr(blsSecretKey *sec, const char *buf, mclSize bufSize);
+BLS_DLL_API int blsPublicKeySetHexStr(blsPublicKey *pub, const char *buf, mclSize bufSize);
+BLS_DLL_API int blsSignatureSetHexStr(blsSignature *sig, const char *buf, mclSize bufSize);
 /*
 	return written byte size if success else 0
 */
@@ -349,9 +372,7 @@ BLS_DLL_API mclSize blsSecretKeyGetLittleEndian(void *buf, mclSize maxBufSize, c
 */
 BLS_DLL_API mclSize blsSecretKeyGetDecStr(char *buf, mclSize maxBufSize, const blsSecretKey *sec);
 BLS_DLL_API mclSize blsSecretKeyGetHexStr(char *buf, mclSize maxBufSize, const blsSecretKey *sec);
-BLS_DLL_API int blsPublicKeySetHexStr(blsPublicKey *pub, const char *buf, mclSize bufSize);
 BLS_DLL_API mclSize blsPublicKeyGetHexStr(char *buf, mclSize maxBufSize, const blsPublicKey *pub);
-BLS_DLL_API int blsSignatureSetHexStr(blsSignature *sig, const char *buf, mclSize bufSize);
 BLS_DLL_API mclSize blsSignatureGetHexStr(char *buf, mclSize maxBufSize, const blsSignature *sig);
 
 /*
