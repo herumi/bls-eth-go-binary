@@ -1,0 +1,118 @@
+# Commit the binaries under `bls/lib/`.
+# - If a pull request is made with release_os in the branch name, it will be committed to that branch.
+# - If there are no differences in the binaries, they will not be committed.
+# - Windows binaries are not yet supported.
+
+name: Release
+on:
+  pull_request:
+
+jobs:
+  archive-binaries:
+    name: archive binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-11]
+
+    # Release will only branch that contain release_os.
+    if: "contains(github.head_ref, 'release_os')"
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: go test -v ./bls
+      - run: git submodule update --init --recursive
+      - name: "[linux/amd64] build"
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install nasm
+          make clean
+          make CXX=clang++
+          go test -v ./bls
+      - name: "[linux/arm64] build"
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y make clang libstdc++-8-dev-arm64-cross
+          make clean
+          make CXX=clang++ COMPILE_TARGET=linux-arm64
+      - name: "[linux/amd64] upload binary"
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/upload-binary-action
+        with:
+          os: linux
+          arch: amd64
+      - name: "[linux/arm64] upload binary"
+        if: runner.os == 'Linux'
+        uses: ./.github/actions/upload-binary-action
+        with:
+          os: linux
+          arch: arm64
+      - name: "[darwin/amd64] build"
+        if: runner.os == 'macOS'
+        run: |
+          brew install nasm
+          make clean
+          make
+          go test -v ./bls
+      - name: "[darwin/arm64] build"
+        if: runner.os == 'macOS'
+        run: |
+          make clean
+          make CXX=clang++ COMPILE_TARGET=mac-m1
+      - name: "[darwin/amd64] upload binary"
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/upload-binary-action
+        with:
+          os: darwin
+          arch: amd64
+      - name: "[darwin/arm64] upload binary"
+        if: runner.os == 'macOS'
+        uses: ./.github/actions/upload-binary-action
+        with:
+          os: darwin
+          arch: arm64
+
+  commit-binaries:
+    name: commit binaries
+    runs-on: ubuntu-latest
+    needs: archive-binaries
+    env:
+      BRANCH_NAME: ${{github.head_ref}}  # The branch name to merge
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+      - name: "[linux/amd64] download binary"
+        uses: ./.github/actions/download-binary-action
+        with:
+          os: linux
+          arch: amd64
+      - name: "[linux/arm64] download binary"
+        uses: ./.github/actions/download-binary-action
+        with:
+          os: linux
+          arch: arm64
+      - name: "[darwin/amd64] download binary"
+        uses: ./.github/actions/download-binary-action
+        with:
+          os: darwin
+          arch: amd64
+      - name: "[darwin/arm64] download binary"
+        uses: ./.github/actions/download-binary-action
+        with:
+          os: darwin
+          arch: arm64
+      - name: commit binaries
+        run: |
+          # check change binaries
+          if [ -z "$(git status --porcelain)" ]; then
+            echo "No change binaries"
+            exit 0
+          fi
+
+          # commit binaries
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git add bls/lib/*
+          git commit -m "[skip ci] add binaries(linux/amd64, linux/arm64, darwin/amd64, darwin/arm64)"
+          git push origin HEAD

@@ -1,0 +1,20 @@
+name: "download binary"
+description: "download binary wrapper"
+
+inputs:
+  os:
+    description: "os"
+    required: true
+  arch:
+    description: "architecture"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/download-artifact@v2
+      with:
+        name: ${{inputs.os}}-${{inputs.arch}}-libbls384_256.a
+    - name: mv binary
+      shell: bash
+      run: mv libbls384_256.a  bls/lib/${{inputs.os}}/${{inputs.arch}}/libbls384_256.a

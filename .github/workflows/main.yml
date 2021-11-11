@@ -27,3 +27,23 @@ jobs:
         make
         go test -v ./bls
 
+  build-arm64:
+    name: build arm64
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-20.04, macos-11]
+    steps:
+      - uses: actions/checkout@v2
+      - run: git submodule update --init --recursive
+      - name: build on linux
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt install -y make clang libstdc++-8-dev-arm64-cross
+          make clean
+          make CXX=clang++ COMPILE_TARGET=linux-arm64
+      - name: build on mac
+        if: runner.os == 'macOS'
+        run: |
+          make clean
+          make CXX=clang++ COMPILE_TARGET=mac-m1

@@ -48,6 +48,20 @@ ifeq ($(CPU),systemz)
   _ARCH=s390x
 endif
 
+ifeq ($(COMPILE_TARGET), mac-m1)
+  _OS=darwin
+  _ARCH=arm64
+  _COMPILE_TARGET=-target arm64-apple-macos11
+  OBJS=$(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base$(BIT).o
+endif
+
+ifeq ($(COMPILE_TARGET), linux-arm64)
+  _OS=linux
+  _ARCH=arm64
+  _COMPILE_TARGET=-target aarch64-linux-gnu --sysroot=/usr/aarch64-linux-gnu
+  OBJS=$(OBJ_DIR)/bls_c384_256.o $(OBJ_DIR)/fp.o $(OBJ_DIR)/base$(BIT).o
+endif
+
 LIB_DIR=bls/lib/$(_OS)/$(_ARCH)
 
 all: $(LIB_DIR)/libbls384_256.a
@@ -57,11 +71,11 @@ $(LIB_DIR)/libbls384_256.a: $(OBJS)
 	$(AR) $(LIB_DIR)/libbls384_256.a $(OBJS)
 
 $(OBJ_DIR)/fp.o:
-	$(CXX) -c -o $(OBJ_DIR)/fp.o $(MCL_DIR)/src/fp.cpp $(MIN_CFLAGS)
+	$(CXX) $(_COMPILE_TARGET) -c -o $(OBJ_DIR)/fp.o $(MCL_DIR)/src/fp.cpp $(MIN_CFLAGS)
 $(OBJ_DIR)/base$(BIT).o: $(MCL_DIR)/src/base$(BIT).ll
-	$(CXX) -c -o $(OBJ_DIR)/base$(BIT).o $(MCL_DIR)/src/base$(BIT).ll $(MIN_CFLAGS)
+	$(CXX) $(_COMPILE_TARGET) -c -o $(OBJ_DIR)/base$(BIT).o $(MCL_DIR)/src/base$(BIT).ll $(MIN_CFLAGS)
 $(OBJ_DIR)/bls_c384_256.o:
-	$(CXX) -c -o $(OBJ_DIR)/bls_c384_256.o $(BLS_DIR)/src/bls_c384_256.cpp $(MIN_CFLAGS)
+	$(CXX) $(_COMPILE_TARGET) -c -o $(OBJ_DIR)/bls_c384_256.o $(BLS_DIR)/src/bls_c384_256.cpp $(MIN_CFLAGS)
 $(MCL_DIR)/obj/static_code.o:
 	$(MAKE) -C $(MCL_DIR) obj/static_code.o
 
