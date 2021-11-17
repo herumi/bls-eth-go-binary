@@ -76,7 +76,7 @@ $(MCL_DIR)/src/base32.ll:
 
 ANDROID_TARGET=armeabi-v7a # arm64-v8a x86_64
 android: $(BASE_LL)
-	@ndk-build -C android/jni NDK_DEBUG=0
+	@ndk-build -C android/jni NDK_DEBUG=0 BLS_LIB_SHARED=$(BLS_LIB_SHARED)
 	@for target in $(ANDROID_TARGET); do \
 		mkdir -p bls/lib/android/$$target; \
 		cp android/obj/local/$$target/libbls384_256.a bls/lib/android/$$target/; \
@@ -136,6 +136,6 @@ update_patch:
 clean:
 	$(MAKE) -C $(MCL_DIR) clean
 	$(MAKE) -C $(BLS_DIR) clean
-	$(RM) -rf obj/*.o
+	$(RM) -rf obj/*.o android/obj/* bls/lib/android/*
 
 .PHONY: android ios each_ios clean
