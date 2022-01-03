@@ -72,6 +72,11 @@ clang generates better binary than gcc.
 ```
 make android
 ```
+If you need a shared library, then after `make clean`,
+
+```
+make android BLS_LIB_SHARED=1
+```
 
 ## iOS
 ```

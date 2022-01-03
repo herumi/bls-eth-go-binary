@@ -36,4 +36,8 @@ LOCAL_CPPFLAGS += -fno-threadsafe-statics
 
 LOCAL_CPPFLAGS += -DBLS_ETH -DBLS_SWAP_G
 #LOCAL_LDLIBS := -llog #-Wl,--no-warn-shared-textrel
-include $(BUILD_STATIC_LIBRARY)
+ifeq ($(BLS_LIB_SHARED),1)
+  include $(BUILD_SHARED_LIBRARY)
+else
+  include $(BUILD_STATIC_LIBRARY)
+endif

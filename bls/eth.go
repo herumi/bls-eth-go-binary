@@ -1,4 +1,5 @@
 package bls
+
 /*
 #cgo CFLAGS:-I${SRCDIR}./include -DBLS_ETH
 #include <mcl/bn_c384_256.h>
