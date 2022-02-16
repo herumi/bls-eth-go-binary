@@ -127,17 +127,6 @@ func (sig *Sign) DeserializeUncompressed(buf []byte) error {
 	return nil
 }
 
-// SetETHmode --
-// 0 ; old version
-// 1 ; draft 05
-// 2 ; draft 06
-func SetETHmode(mode int) error {
-	if err := C.blsSetETHmode(C.int(mode)); err != 0 {
-		return fmt.Errorf("got non-zero response code: %d", err)
-	}
-	return nil
-}
-
 // AreAllMsgDifferent checks the given message slice to ensure that each 32 byte segment is unique.
 func AreAllMsgDifferent(msgVec []byte) bool {
 	const MSG_SIZE = 32

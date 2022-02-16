@@ -31,6 +31,17 @@ func hex2byte(s string) ([]byte, error) {
 	return hex.DecodeString(s)
 }
 
+// SetETHmode --
+// Set hash function
+// mode = EthModeOld or EthModeLatest(=EthModeDraft07)
+// error if curve != MCL_BLS12_381
+func SetETHmode(mode int) error {
+	if C.blsSetETHmode(C.int(mode)) != 0 {
+		return fmt.Errorf("ERR SetETHmode")
+	}
+	return nil
+}
+
 // Init --
 // call this function before calling all the other operations
 // this function is not thread safe
@@ -39,15 +50,10 @@ func Init(curve int) error {
 	if err != 0 {
 		return fmt.Errorf("ERR Init curve=%d", curve)
 	}
-	if ethMode {
-		if curve != C.MCL_BLS12_381 {
-			return fmt.Errorf("ERR only BLS12-381")
-		}
-		if C.blsSetETHmode(C.BLS_ETH_MODE_DRAFT_07) != 0 {
-			return fmt.Errorf("ERR SetETHmode")
-		}
+	if !ethMode {
+		return nil
 	}
-	return nil
+	return SetETHmode(C.BLS_ETH_MODE_LATEST)
 }
 
 // ID --
