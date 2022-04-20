@@ -170,7 +170,7 @@ type SecretKey struct {
 
 // Serialize --
 func (sec *SecretKey) Serialize() []byte {
-	buf := make([]byte, 32)
+	buf := make([]byte, C.mclBn_getFpByteSize())
 	// #nosec
 	n := C.blsSecretKeySerialize(unsafe.Pointer(&buf[0]), C.mclSize(len(buf)), &sec.v)
 	if n == 0 {
