@@ -54,31 +54,34 @@ go get github.com/herumi/bls-eth-go-binary/
 go run examples/sample.go
 ```
 
-# How to build the static library
+# How to build the static binary
 The following steps are not necessary if you use compiled binary in this repository.
 
+```
+git clone --recursive https://github.com/herumi/bls-go-binary
+cd bls-go-binary
+#git submodule update --init --recursive
+go test ./bls -bench "Pairing|Sign|Verify" -count=1
+```
+
 ## Linux, Mac, Windows(mingw64)
+clang is necessary to build ll files.
 ```
-git clone --recursive https://github.com/herumi/bls-eth-go-binary
-# git submodule update --init --recursive
-cd bls-eth-go-binary
 make CXX=clang++
-go test ./bls -bench "Pairing|Sign|Verify"
 ```
 
-clang generates better binary than gcc.
-
-## Android
+# Android
 ```
 make android
 ```
+
 If you need a shared library, then after `make clean`,
 
 ```
 make android BLS_LIB_SHARED=1
 ```
 
-## iOS
+# iOS
 ```
 make ios
 ```
