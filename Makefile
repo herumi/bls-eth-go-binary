@@ -1,19 +1,17 @@
-ETH_CFLAGS=-DBLS_ETH
+-include ETH.cfg
 SRC_DIR?=src/
 BLS_DIR=$(SRC_DIR)/bls
 MCL_DIR=$(BLS_DIR)/mcl
 all:
-	$(MAKE) -C $(BLS_DIR) -f Makefile.onelib SRC_DIR=$(SRC_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) all
-
+	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) all
 ios:
-	$(MAKE) -C $(BLS_DIR) -f Makefile.onelib SRC_DIR=$(SRC_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) ios
-
+	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) ios
 ios_simulator:
-	$(MAKE) -C $(BLS_DIR) -f Makefile.onelib SRC_DIR=$(SRC_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) ios_simulator
+	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) ios_simulator
 
 NDK_BUILD?=ndk-build
 android:
-	$(MAKE) -C $(BLS_DIR) -f Makefile.onelib SRC_DIR=$(SRC_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) NDK_BUILD=$(NDK_BUILD) BLS_LIB_SHARED=$(BLS_LIB_SHARED) android
+	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) NDK_BUILD=$(NDK_BUILD) BLS_LIB_SHARED=$(BLS_LIB_SHARED) android
 
 update:
 	cp $(BLS_DIR)/include/bls/bls.h bls/include/bls/.
