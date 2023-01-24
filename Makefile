@@ -1,7 +1,7 @@
 -include ETH.cfg
 SRC_DIR?=src/
-BLS_DIR=$(SRC_DIR)/bls
-MCL_DIR=$(BLS_DIR)/mcl
+BLS_DIR?=$(SRC_DIR)/bls
+MCL_DIR?=$(BLS_DIR)/mcl
 all:
 	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) all
 ios:
