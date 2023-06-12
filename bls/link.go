@@ -5,9 +5,9 @@ package bls
 
 /*
 #cgo LDFLAGS:-lbls384_256 -lstdc++ -lm
-#cgo android,arm64 LDFLAGS:-L${SRCDIR}/lib/linux/arm64
+#cgo android,arm64 LDFLAGS:-L${SRCDIR}/lib/android/arm64-v8a
 #cgo android,arm LDFLAGS:-L${SRCDIR}/lib/android/armeabi-v7a
-#cgo android,amd64 LDFLAGS:-L${SRCDIR}/lib/linux/amd64
+#cgo android,amd64 LDFLAGS:-L${SRCDIR}/lib/android/x86_64
 #cgo linux,amd64 LDFLAGS:-L${SRCDIR}/lib/linux/amd64
 #cgo linux,arm64 LDFLAGS:-L${SRCDIR}/lib/linux/arm64
 #cgo linux,mipsle LDFLAGS:-L${SRCDIR}/lib/linux/mipsel
