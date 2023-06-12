@@ -9,7 +9,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 #    - run: go test -v ./bls
     - run: git submodule update --init --recursive
     - name: build on linux
