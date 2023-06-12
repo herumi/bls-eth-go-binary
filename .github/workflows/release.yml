@@ -1,0 +1,273 @@
+name: Release
+
+
+permissions:
+  contents: write
+  repository-projects: write
+
+concurrency:
+  group: "release-${{ github.ref }}"
+  cancel-in-progress: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'release/tag: vX.Y.Z'
+        required: true
+
+
+jobs:
+  create-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull
+          git checkout release 2>/dev/null || git checkout -b release
+          rm -rf ./src/bls && mkdir -p ./src/bls
+          git merge origin/master -q -m "chore(git): merged latest master"
+          git submodule update --init --recursive
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git push --set-upstream origin release
+  build-linux:
+    runs-on: ubuntu-latest
+    needs: create-branch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      - uses: android-actions/setup-android@v2
+
+      - name: Install Android Platform
+        run: |
+          sdkmanager "platform-tools"
+          sdkmanager "platforms;android-29"
+          sdkmanager "build-tools;29.0.2"
+
+      - uses: nttld/setup-ndk@v1
+        id: setup-ndk
+        with:
+          ndk-version: r21d
+
+      - name: Build linux
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+          git submodule update --init --recursive
+
+          sudo apt update
+          sudo apt install nasm
+
+          [ -d ./bls/lib/linux/ ] && rm -rf ./bls/lib/linux/
+          make clean
+
+          mkdir -p ./bls/lib/linux/
+
+          make CXX=clang++
+          make clean
+          # build linux/arm64
+          sudo apt-get install gcc-multilib
+          make aarch64
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add ./bls/lib/linux -f
+
+          changes=$(git diff --staged --numstat | wc -l)
+          if [[ $changes -gt 0 ]]
+          then
+            git commit -m "fix(release): added libs for linux(amd64/arm64)"
+            git push
+          fi
+
+      - name: Build android
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+
+          [ -d ./bls/lib/android/ ] && rm -rf ./bls/lib/android/
+          make clean
+
+          mkdir -p ./bls/lib/android/
+
+          make android
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add ./bls/lib/android/ -f
+
+          changes=$(git diff --staged --numstat | wc -l)
+          if [[ $changes -gt 0 ]]
+          then
+            git commit -m "fix(release): added libs for android"
+            git push
+          fi
+  build-macos:
+    runs-on: macos-latest
+    needs: build-linux
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+
+      - name: Build darwin
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+          git submodule update --init --recursive
+
+          brew install nasm
+
+          [ -d ./bls/lib/darwin/ ] && rm -rf ./bls/lib/darwin/
+          make clean
+
+          mkdir -p ./bls/lib/darwin/
+
+          make ARCH=x86_64
+          make clean
+          make ARCH=arm64
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          git add ./bls/lib/darwin/ -f
+
+          changes=$(git diff --staged --numstat | wc -l)
+          if [[ $changes -gt 0 ]]
+          then
+            git commit -m "fix(release): added libs for darwin"
+            git push
+          fi
+
+      - name: Build ios
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+          git submodule update --init --recursive
+
+          [ -d ./bls/lib/ios ] && rm -rf ./bls/lib/ios
+          [ -d ./bls/lib/iossimulator ] && rm -rf ./bls/lib/iossimulator
+          make clean
+
+          mkdir -p ./bls/lib/ios
+          mkdir -p ./bls/lib/iossimulator
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+
+          make ios
+          make ios_simulator
+
+          git add ./bls/lib/ios -f
+          git add ./bls/lib/iossimulator -f
+
+          changes=$(git diff --staged --numstat | wc -l)
+          if [[ $changes -gt 0 ]]
+          then
+            git commit -m "fix(release): added libs for ios/ios simulator"
+            git push
+          fi
+
+  build-windows:
+    runs-on: windows-latest
+    needs: build-macos
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: ^1.20
+
+      - name: Install MSYS2
+        uses: msys2/setup-msys2@v2
+        with:
+          update: true
+          msystem: MINGW64
+          install: base-devel git gcc make python3 # mingw-w64-x86_64-clang
+
+      - name: Build windows
+        # shell: msys2 {0}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+          git submodule update --init --recursive
+
+          gcc --version
+          python3 --version
+
+          git checkout .
+          if (Test-Path "./bls/lib/windows/amd64") {
+            Remove-Item "./bls/lib/windows/amd64" -Recurse -Force
+          }
+          make clean
+          # make -j # ar gives an error for some reason, so use the followings:
+
+          md "./bls/lib/windows/amd64"
+
+          make -C ./src/bls -f Makefile.onelib LIB_DIR=./
+          cp ./src/bls/libbls384_256.a ./bls/lib/windows/amd64/libbls384_256.a
+
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add ./bls/lib/windows -f && git commit -m "fix(release): added libs for windows"  && git push
+
+
+  create-release:
+    runs-on: ubuntu-latest
+    needs: build-windows
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Set hash
+        id: set-hash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        run: |
+          git pull && git checkout release
+          git submodule update --init --recursive
+          git branch -av
+          git rev-parse HEAD
+          echo "hash=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: show
+        run: |
+         echo "hash" "${{ env.hash }}"
+
+      - name: Create Release
+        id: create_release
+        run: gh release create "${{ github.event.inputs.version }}" -t "${{ github.event.inputs.version }}" --target "release" --latest
+        env:
+          GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
