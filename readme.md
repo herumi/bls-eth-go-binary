@@ -65,9 +65,28 @@ go test ./bls -bench "Pairing|Sign|Verify" -count=1
 ```
 
 ## Linux, Mac, Windows(mingw64)
-clang is necessary to build ll files.
+On x64 Linux,
+```
+make
+```
+
+Otherwise, clang is necessary to build ll files.
 ```
 make CXX=clang++
+```
+
+### Cross compile on macOS
+
+```
+make ARCH=x86_64 # for Intel mac
+make ARCH=arm64  # for M1 mac
+```
+
+### Cross compile of aarch64 on x64 Linux
+
+```
+sudo apt-get install gcc-multilib
+make -C src/bls -f Makefile.onelib build_aarch64 CXX=clang++ -j OUT_DIR=../..
 ```
 
 # Android
