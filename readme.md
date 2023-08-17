@@ -9,6 +9,7 @@ This repository contains compiled static library of https://github.com/herumi/bl
 * Sign; G2
 
 # News
+- 2023/Aug/17 The performance of Sign is a little improved.
 - 2023/Jun/12 move static libraries to release branch
 - 2021/Jan/28 (change specification) enable VerifySignatureOrder and VerifyPublicKeyOrder by default
 - 2021/Jan/28 (change specification) verify returns false for zero public key
