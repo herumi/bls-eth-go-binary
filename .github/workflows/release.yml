@@ -237,7 +237,7 @@ jobs:
 
           md "./bls/lib/windows/amd64"
 
-          make -C ./src/bls -f Makefile.onelib LIB_DIR=./
+          make -C ./src/bls -f Makefile.onelib LIB_DIR=./ ETH_CFLAGS=-DBLS_ETH
           cp ./src/bls/libbls384_256.a ./bls/lib/windows/amd64/libbls384_256.a
 
           git config user.name github-actions
