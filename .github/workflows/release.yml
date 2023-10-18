@@ -215,7 +215,7 @@ jobs:
         with:
           update: true
           msystem: MINGW64
-          install: base-devel git gcc make python3 # mingw-w64-x86_64-clang
+          install: base-devel git gcc make python3 nasm # mingw-w64-x86_64-clang
 
       - name: Build windows
         # shell: msys2 {0}
