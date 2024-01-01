@@ -25,7 +25,7 @@ Then, generate random IDs
 
 totalNumberOfSigners := 3
 
-randomIDs := kly_tbls.GenerateRandomIds(totalNumberOfSigners)
+randomIDs := tbls.GenerateRandomIds(totalNumberOfSigners)
 
 fmt.Println("IDs are => ", randomIDs)
 ```
@@ -193,7 +193,7 @@ Now, anyone can take these 2 partial signatures and IDs of signers and aggregate
 hexIDOfUser1 := "70b631f57c3636805d5f8b93d6db7184977a9a6e5de427915724309f60a7fd32"
 hexIDOfUser2 := "4049877b89f7b1e4cecebb613cea8944c23e41baabfe5628e7ae8aa86dc349af"
 
-rootSignature := kly_tbls.BuildRootSignature([]string{partialSignature1, partialSignature2}, []string{hexIDOfUser1, hexIDOfUser2})
+rootSignature := tbls.BuildRootSignature([]string{partialSignature1, partialSignature2}, []string{hexIDOfUser1, hexIDOfUser2})
 
 fmt.Println("Root signature is => ", rootSignature)
 ```
