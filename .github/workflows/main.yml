@@ -2,28 +2,50 @@ name: test
 on: [push]
 
 jobs:
-  build:
-    name: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+  Run-on-ubuntu:
+    name: Run on ubuntu
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-#    - run: go test -v ./bls
-    - run: git submodule update --init --recursive
-    - name: build on linux
-      if: runner.os == 'Linux'
-      run: |
+    - uses: actions/checkout@v4
+    - run: |
+        git submodule update --init --recursive
         sudo apt install nasm
         make clean
         make CXX=clang++
         go test -v ./bls
-    - name: build on mac
-      if: runner.os == 'macOS'
-      run: |
+
+  Run-on-macos:
+    name: Run on macos
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: |
+        git submodule update --init --recursive
         brew install nasm
         make clean
         make
         go test -v ./bls
 
+  Run-on-windows:
+    name: Run on windows
+    runs-on: windows-latest
+    steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        #msystem: UCRT64
+        update: true
+        platform-check-severity: warn
+        install: >-
+          make
+          python3
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-go
+    - uses: msys2/setup-msys2@v2
+    # - uses: actions/checkout@v4
+    - run: |
+        git clone -b release https://github.com/herumi/bls-eth-go-binary
+        cd bls-eth-go-binary
+        #git submodule update --init --recursive
+        #make MCL_STATIC_CODE=0
+        go test -v ./bls
