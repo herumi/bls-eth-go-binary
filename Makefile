@@ -1,5 +1,8 @@
 -include ETH.cfg
 ARCH?=$(shell uname -m)
+ifeq ($(ARCH),x86_64)
+MCL_STATIC_CODE=1
+endif
 SRC_DIR?=src/
 BLS_DIR?=$(SRC_DIR)/bls
 MCL_DIR?=$(BLS_DIR)/mcl
