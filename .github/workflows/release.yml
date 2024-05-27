@@ -39,7 +39,9 @@ jobs:
           git config user.email github-actions@github.com
           git push --set-upstream origin release
   build-linux:
-    runs-on: ubuntu-latest
+    # For Linux build we use an Ubuntu version that's as old as possible so that
+    # the generated artifacts are compatible with not-so-recent systems
+    runs-on: ubuntu-20.04
     needs: create-branch
     steps:
       - name: Checkout code
