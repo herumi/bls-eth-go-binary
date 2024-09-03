@@ -14,14 +14,32 @@ jobs:
         make CXX=clang++
         go test -v ./bls
 
-  Run-on-macos:
-    name: Run on macos
-    runs-on: macos-latest
+  Run-on-Intel-macos:
+    name: Run on Intel macos
+    runs-on: macos-13
     steps:
     - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.18.x'
     - run: |
         git submodule update --init --recursive
         brew install nasm
+        make clean
+        make
+        go test -v ./bls
+
+  Run-on-ARM-macos:
+    name: Run on macos
+    # Intel Mac
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.18.x'
+    - run: |
+        git submodule update --init --recursive
         make clean
         make
         go test -v ./bls
