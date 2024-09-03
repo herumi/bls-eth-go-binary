@@ -86,7 +86,8 @@ jobs:
 
           mkdir -p ./bls/lib/linux/
 
-          make CXX=clang++
+          #make CXX=clang++ # avoid crashes on non-AVX CPUs
+          make
           make clean
           # build linux/arm64
           sudo apt-get install gcc-multilib
