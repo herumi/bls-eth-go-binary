@@ -130,7 +130,7 @@ jobs:
             git push
           fi
   build-macos:
-    runs-on: macos-15 # macos-latest
+    runs-on: macos-13 # macos-14 causes link error
     needs: build-linux
     steps:
       - name: Checkout code
