@@ -16,7 +16,7 @@ jobs:
 
   Run-on-Intel-macos:
     name: Run on Intel macos
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
