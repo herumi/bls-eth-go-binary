@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "install": "npm install",
+    "install:test": "npm install test"
+  }
+}
