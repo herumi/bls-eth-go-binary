@@ -12,6 +12,8 @@ jobs:
         sudo apt install nasm
         make clean
         make CXX=clang++
+        go mod vendor
+        cp -r bls/include bls/lib bls/tests vendor/
         go test -v ./bls
 
   Run-on-Intel-macos:
@@ -27,6 +29,8 @@ jobs:
         brew install nasm
         make clean
         make
+        go mod vendor
+        cp -r bls/include bls/lib bls/tests vendor/
         go test -v ./bls
 
   Run-on-ARM-macos:
@@ -42,6 +46,8 @@ jobs:
         git submodule update --init --recursive
         make clean
         make
+        go mod vendor
+        cp -r bls/include bls/lib bls/tests vendor/
         go test -v ./bls
 
   Run-on-windows:
@@ -66,4 +72,6 @@ jobs:
         cd bls-eth-go-binary
         #git submodule update --init --recursive
         #make MCL_STATIC_CODE=0
+        go mod vendor
+        cp -r bls/include bls/lib bls/tests vendor/
         go test -v ./bls

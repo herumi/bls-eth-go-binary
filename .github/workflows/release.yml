@@ -93,6 +93,9 @@ jobs:
           sudo apt-get install gcc-multilib
           make aarch64
 
+          go mod vendor
+          cp -r bls/include bls/lib bls/tests vendor/
+
           git config user.name github-actions
           git config user.email github-actions@github.com
 
@@ -117,6 +120,9 @@ jobs:
           mkdir -p ./bls/lib/android/
 
           make android
+
+          go mod vendor
+          cp -r bls/include bls/lib bls/tests vendor/
 
           git config user.name github-actions
           git config user.email github-actions@github.com
@@ -159,6 +165,9 @@ jobs:
           make clean
           make ARCH=arm64
 
+          go mod vendor
+          cp -r bls/include bls/lib bls/tests vendor/
+
           git config user.name github-actions
           git config user.email github-actions@github.com
 
@@ -190,6 +199,9 @@ jobs:
 
           make ios
           make ios_simulator
+
+          go mod vendor
+          cp -r bls/include bls/lib bls/tests vendor/
 
           git add ./bls/lib/ios -f
           git add ./bls/lib/iossimulator -f
@@ -242,6 +254,9 @@ jobs:
 
           make -C ./src/bls -f Makefile.onelib LIB_DIR=./ ETH_CFLAGS=-DBLS_ETH
           cp ./src/bls/libbls384_256.a ./bls/lib/windows/amd64/libbls384_256.a
+
+          go mod vendor
+          cp -r bls/include bls/lib bls/tests vendor/
 
           git config user.name github-actions
           git config user.email github-actions@github.com
