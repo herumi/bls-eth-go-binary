@@ -52,9 +52,19 @@ Check functions:
 # How to run `examples/sample.go`
 
 ```
-go get github.com/herumi/bls-eth-go-binary/
+git clone -b release https://github.com/herumi/bls-eth-go-binary
 go run examples/sample.go
 ```
+
+# How to use `setup_vendor.sh`
+Since this package includes C headers and libraries,
+when using `go build -mod=vendor`, please run:
+
+```bash
+$GOMODCACHE/github.com/herumi/bls-go-binary@<version>/setup_vendor.sh
+```
+
+This command will copy all necessary files to your vendor directory.
 
 # How to build the static binary
 The following steps are not necessary if you use compiled binary in this repository.
