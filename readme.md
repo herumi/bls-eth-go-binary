@@ -102,6 +102,19 @@ sudo apt-get install gcc-multilib
 make -C src/bls -f Makefile.onelib build_aarch64 CXX=clang++ -j OUT_DIR=../..
 ```
 
+### Cross compile of RISC-V
+Install a cross compiler.
+```
+sudo apt install gcc-riscv64-linux-gnu
+```
+
+Build a library and run the sample.
+```
+make riscv64
+env CGO_ENABLED=1 GOARCH=riscv64 CC=riscv64-linux-gnu-gcc-14 go build examples/sample.go
+env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu ./sample
+```
+
 # Android
 ```
 make android

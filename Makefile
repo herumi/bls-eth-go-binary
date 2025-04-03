@@ -12,6 +12,8 @@ ios_simulator:
 
 aarch64: # for cross compile on x64-linux
 	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) build_aarch64 CXX=clang++
+riscv64: # for cross compile on x64-linux
+	$(MAKE) -f $(BLS_DIR)/Makefile.onelib BLS_DIR=$(BLS_DIR) MCL_DIR=$(MCL_DIR) OUT_DIR=$(shell pwd) ETH_CFLAGS=$(ETH_CFLAGS) build_riscv64 CXX=clang++
 
 NDK_BUILD?=ndk-build
 android:
