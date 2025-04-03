@@ -103,7 +103,7 @@ make -C src/bls -f Makefile.onelib build_aarch64 CXX=clang++ -j OUT_DIR=../..
 ```
 
 ### Cross compile of RISC-V
-Insltall a cross compiler.
+Install a cross compiler.
 ```
 sudo apt install gcc-riscv64-linux-gnu
 ```
