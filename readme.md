@@ -116,6 +116,7 @@ env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu ./sample
 ```
 
 # Android
+Install [ndk-build](https://developer.android.com/ndk/guides).
 ```
 make android
 ```
