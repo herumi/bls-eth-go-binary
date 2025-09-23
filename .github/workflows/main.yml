@@ -48,10 +48,10 @@ jobs:
     name: Run on windows
     runs-on: windows-latest
     steps:
+    - uses: actions/checkout@v4
     - uses: msys2/setup-msys2@v2
       with:
         msystem: MINGW64
-        #msystem: UCRT64
         update: true
         platform-check-severity: warn
         install: >-
@@ -59,11 +59,8 @@ jobs:
           python3
           mingw-w64-x86_64-gcc
           mingw-w64-x86_64-go
-    - uses: msys2/setup-msys2@v2
-    # - uses: actions/checkout@v4
     - run: |
-        git clone -b release https://github.com/herumi/bls-eth-go-binary
-        cd bls-eth-go-binary
-        #git submodule update --init --recursive
-        #make MCL_STATIC_CODE=0
+        git submodule update --init --recursive
+        make clean
+        make
         go test -v ./bls
