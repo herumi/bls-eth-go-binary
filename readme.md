@@ -52,18 +52,29 @@ Check functions:
 # How to run `examples/sample.go`
 
 ```
-go get github.com/herumi/bls-eth-go-binary/
+git clone -b release https://github.com/herumi/bls-eth-go-binary
+cd bls-eth-go-binary
 go run examples/sample.go
 ```
 
+# How to use `setup_vendor.sh`
+Since this package includes C headers and libraries,
+when using `go build -mod=vendor`, please run:
+
+```bash
+$GOMODCACHE/github.com/herumi/bls-eth-go-binary@<version>/setup_vendor.sh
+```
+
+This command will copy all necessary files to your vendor directory.
+
 # How to build the static binary
-The following steps are not necessary if you use compiled binary in this repository.
+The following steps are not necessary if you use release branch.
 
 ```
-git clone --recursive https://github.com/herumi/bls-go-binary
-cd bls-go-binary
-#git submodule update --init --recursive
-go test ./bls -bench "Pairing|Sign|Verify" -count=1
+git clone https://github.com/herumi/bls-eth-go-binary
+cd bls-eth-go-binary
+git submodule update --init --recursive
+go test ./bls
 ```
 
 ## Linux, Mac, Windows(mingw64)
@@ -91,7 +102,21 @@ sudo apt-get install gcc-multilib
 make -C src/bls -f Makefile.onelib build_aarch64 CXX=clang++ -j OUT_DIR=../..
 ```
 
+### Cross compile of RISC-V
+Install a cross compiler.
+```
+sudo apt install gcc-riscv64-linux-gnu
+```
+
+Build a library and run the sample.
+```
+make riscv64
+env CGO_ENABLED=1 GOARCH=riscv64 CC=riscv64-linux-gnu-gcc-14 go build examples/sample.go
+env QEMU_LD_PREFIX=/usr/riscv64-linux-gnu ./sample
+```
+
 # Android
+Install [ndk-build](https://developer.android.com/ndk/guides).
 ```
 make android
 ```
