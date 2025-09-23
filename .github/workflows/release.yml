@@ -41,7 +41,7 @@ jobs:
   build-linux:
     # For Linux build we use an Ubuntu version that's as old as possible so that
     # the generated artifacts are compatible with not-so-recent systems
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     needs: create-branch
     steps:
       - name: Checkout code
@@ -56,9 +56,9 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '11'
+          java-version: '17'
 
-      - uses: android-actions/setup-android@v2
+      - uses: android-actions/setup-android@v3
 
       - name: Install Android Platform
         run: |
@@ -218,7 +218,7 @@ jobs:
         with:
           update: true
           msystem: MINGW64
-          install: base-devel git gcc make python3 nasm mingw-w64-x86_64-gcc
+          install: base-devel git gcc make python3 nasm # mingw-w64-x86_64-clang
 
       - name: Build windows
         # shell: msys2 {0}
