@@ -697,13 +697,6 @@ func (sig *Sign) VerifyHash(pub *PublicKey, hash []byte) bool {
 	return C.blsVerifyHash(&sig.v, &pub.v, getPointer(hash), C.mclSize(len(hash))) == 1
 }
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 // VerifyAggregateHashes --
 func (sig *Sign) VerifyAggregateHashes(pubVec []PublicKey, hash [][]byte) bool {
 	if pubVec == nil {
