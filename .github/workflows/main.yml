@@ -6,10 +6,14 @@ jobs:
     name: Run on ubuntu
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v5
+      with:
+        go-version: 'latest'
     - run: |
         git submodule update --init --recursive
-        sudo apt install nasm
+        sudo apt update
+        sudo apt install -y nasm
         make clean
         make CXX=clang++
         go test -v ./bls
@@ -21,7 +25,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.18.x'
+        go-version: 'latest'
     - run: |
         git submodule update --init --recursive
         brew install nasm
@@ -37,7 +41,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
-        go-version: '1.18.x'
+        go-version: 'latest'
     - run: |
         git submodule update --init --recursive
         make clean
