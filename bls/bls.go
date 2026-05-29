@@ -775,6 +775,7 @@ func createSlice(buf *C.char, n C.uint) []byte {
 }
 
 // this function can't be put in callback.go
+//
 //export wrapReadRandGo
 func wrapReadRandGo(buf *C.char, n C.uint) C.uint {
 	slice := createSlice(buf, n)
