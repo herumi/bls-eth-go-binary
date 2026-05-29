@@ -548,6 +548,27 @@ func testGetSafePublicKey(t *testing.T) {
 	}
 }
 
+// https://github.com/herumi/bls-eth-go-binary/issues/70
+// replace uintptr with unsafe.Pointer and unsafe.Add
+func testMultiVerifyCheckptr(t *testing.T) {
+	const n = 6
+	sigs := make([]Sign, n)
+	pubs := make([]PublicKey, n)
+	concat := make([]byte, n*32)
+	for i := 0; i < n; i++ {
+		var sk SecretKey
+		sk.SetByCSPRNG()
+		pubs[i] = *sk.GetPublicKey()
+		var msg [32]byte
+		_, _ = rand.Read(msg[:])
+		copy(concat[i*32:(i+1)*32], msg[:])
+		sigs[i] = *sk.SignByte(msg[:])
+	}
+	if !MultiVerify(sigs, pubs, concat) {
+		t.Fatal("MultiVerify failed")
+	}
+}
+
 func Test(t *testing.T) {
 	if Init(BLS12_381) != nil {
 		t.Fatalf("Init")
@@ -570,6 +591,7 @@ func Test(t *testing.T) {
 	testEthDraft07(t)
 	testMultiVerify(t)
 	testGetSafePublicKey(t)
+	testMultiVerifyCheckptr(t)
 }
 
 func BenchmarkPairing(b *testing.B) {
